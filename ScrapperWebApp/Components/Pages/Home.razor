@@ -1,0 +1,257 @@
+﻿@page "/"
+@using ScrapperWebApp.Data
+@using ScrapperWebApp.Models
+@using ScrapperWebApp.Services
+@using ScrapperWebApp.Services.Interfaces
+@attribute [StreamRendering]
+@inherits OwningComponentBase<FiltroService>
+@inject IScrapperService scrapperService
+@inject IEmpresaService empresaService
+@inject IImportService importService
+@inject IFiltroService filteroService
+@rendermode InteractiveServer
+
+
+<PageTitle>Scrapper</PageTitle>
+<div class="row">
+    <div class="col-4">
+        <h2>Scrapper Web App</h2>
+    </div>
+    <div class="col-2">
+        
+    </div>
+    <div class="col-6 text-right" style="text-align: right !important">
+        <button @onclick="ImportFiltroData" class="btn btn-sm btn-warning">Import Filtro Data</button>
+        <button @onclick="ImportCepData" class="btn btn-sm btn-warning">Import Cep Data</button>
+        <button @onclick="ImportAtivdadeData" class="btn btn-sm btn-warning">Import Atividade Data</button>
+        <p class="m-0"><em>Supports xlsx, xlsm format files (table will cleared before import)</em></p>
+        @if (showAlertMessage)
+        {
+            <p class="m-0 text-success"><em>@alertText</em></p>
+        }
+    </div>
+</div>
+
+
+@if (filtros == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <hr />
+    <div class="row">
+        <div class="col-3">
+            <button disabled="@CheckIfFiltersExists()" @onclick="GetScrappedData" class="btn btn-success">Start Scrapper</button>
+        </div>
+        <div class="col-6"></div>
+        <div class="col-3">
+            <button class="btn btn-danger float-end">Stop Scrapper</button>
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-dark text-center" role="alert">Step 01 - API 01</div>
+        </div>
+        <div class="col-6">
+           
+            
+            
+            @if (loader == true)
+            {
+                <p class="text-primary"><em>Scrapping Data, Please Wait...</em></p>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(@error))
+        {
+            <div class="col-6">
+                <div class="text-danger">@error</div>
+            </div>
+        }
+        <hr/>
+    </div>
+    <table class="table table-borderless">
+        <thead>
+            <tr>
+                <th>CEP</th>
+                <th>Data de Abertura - A partir de</th>
+                <th>Data de Abertura - Ate</th>
+                <th>Total de Registros</th>
+                <th>Registros Salvos</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (showFilter == true)
+            {
+            <tr>
+                <td>@currentFilter.NoCep</td>
+                <td>@currentFilter.DtInicial</td>
+                <td>@currentFilter.DtFinal</td>
+                <td>@currentFilter.NoContador</td>
+                <td>0</td>
+                </tr>
+            }
+            else
+            {
+                <tr><p class="text-danger"><em>No filter in progress at the moment</em></p>  </tr>
+            }
+        </tbody>
+    </table>
+    <div class="row">
+        <div class=" col-12">
+            <div class="alert alert-dark text-center" role="alert">Step 02 - API 02</div>
+        </div>
+    </div>
+    @* <div class="row">
+        <div class="col-12">
+            <button @onclick="ScrapeDetails" class="btn btn-primary">Start Process</button>
+        </div>
+    </div> *@
+    @* <table class="table">
+        <thead>
+            <tr>
+                <th>CNPJ</th>
+                <th>Razao Social</th>
+                <th>Situacao</th>
+                <th>Total de Registros</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var filter in filtros.Take(20))
+            {
+                <tr>
+                    <td>@filter.NoCep</td>
+                    <td>@filter.DtInicial</td>
+                    <td>@filter.DtFinal</td>
+                    <td>@filter.NoContador</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <hr /> *@
+    <table class="table">
+        <thead>
+            <tr>
+                <th>CEP</th>
+                <th>Data de Abertura - A partir de</th>
+                <th>Data de Abertura - Ate</th>
+                <th>Total de Registros</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (filtros == null || filtros.Count == 0)
+            {
+                if (filtros.Count == 0)
+                {
+                    <tr><p class="text-danger"><em>No Filters Found...</em></p></tr>
+                }
+                else
+                {
+                    <tr><p class="text-success"><em>Loading Filters...</em></p></tr>
+                }
+            }
+            else{
+                @foreach (var filter in filtros)
+                {
+                    <tr>
+                        <td>@filter.NoCep</td>
+                        <td>@filter.DtInicial</td>
+                        <td>@filter.DtFinal</td>
+                        <td>@filter.NoContador</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Filtro> filtros = new List<Filtro>();
+    List<Filtro> records = new List<Filtro>();
+    bool loader = false;
+    bool showFilter = false;
+    Filtro filter = new Filtro();
+    Filtro currentFilter = new Filtro();
+    string error = string.Empty;
+    string alertText = string.Empty;
+    bool showAlertMessage = false;
+    protected override async Task OnInitializedAsync()
+    {
+        filtros = await @filteroService.GetFiltrosWhereAsync();
+    }
+    protected bool CheckIfFiltersExists()
+    {
+        return filtros.Count == 0 ? true : false;
+    }
+    protected async void GetScrappedData()
+    {
+        loader = true;
+        //filter = await filteroService.GetFirstFiltrosAsync();
+
+        //currentFilter.NoCep = 29101010;
+        //currentFilter.DtInicial = DateTime.Parse("2023-02-28");
+        //currentFilter.DtFinal = DateTime.Parse("2024-04-27");
+        foreach (var filter in filtros)
+        {
+            currentFilter = filter;
+            showFilter = true;
+            StateHasChanged();
+            records = await @scrapperService.GetMainRecords(currentFilter);
+            StateHasChanged();
+            if (filtros == null || filtros.Count == 0)
+            {
+                error = "No Data Found for this Filtro";
+            }
+            else
+            {
+                //foreach (var record in records)
+                //{
+                var data = await @scrapperService.GetScrappedData(filter);
+                await empresaService.CreateEmpresaAsync(data);
+                //}
+            }
+            currentFilter = null;
+            showFilter = false;
+            StateHasChanged();
+        }
+        loader = false;
+        StateHasChanged();
+    }
+    protected async void ScrapeDetails()
+    {
+        foreach(var filter in filtros)
+        {
+            var data = await @scrapperService.GetScrappedData(filter);
+            //await empresaService.CreateEmpresaAsync(data);
+        }
+    }
+
+    protected async void ImportFiltroData()
+    {
+        showAlertMessage = true;
+        alertText = "Filtro table data import in progress.";
+        StateHasChanged();
+        await importService.SeedFiltroData();
+        showAlertMessage = false;
+        StateHasChanged();
+    }
+    protected async void ImportCepData()
+    {
+        showAlertMessage = true;
+        alertText = "Cep table data import in progress.";
+        StateHasChanged();
+        await importService.SeedCepData();
+        showAlertMessage = false;
+        StateHasChanged();
+    } 
+    protected async void ImportAtivdadeData()
+    {
+        showAlertMessage = true;
+        alertText = "Atividade table data import in progress.";
+        StateHasChanged();
+        await importService.SeedAtividadeData();
+        showAlertMessage = false;
+        StateHasChanged();
+    }
+}
