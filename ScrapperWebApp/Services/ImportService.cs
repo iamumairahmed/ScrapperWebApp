@@ -1,9 +1,6 @@
 ﻿using ExcelDataReader;
-using Microsoft.EntityFrameworkCore;
-using ScrapperWebApp.Data;
 using ScrapperWebApp.Models;
 using ScrapperWebApp.Services.Interfaces;
-using System.Collections.Generic;
 using System.Data;
 
 namespace ScrapperWebApp.Services

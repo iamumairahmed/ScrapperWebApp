@@ -5,10 +5,10 @@ namespace ScrapperWebApp.Services.Interfaces
 {
     public interface ICepService
     {
-        Task<List<Cep>> GetCepsAsync();
+        Task<ResponseModel> GetCepsAsync();
 
-        Task<bool> CreateCepsAsync(List<Cep> objCeps);
-        Task<bool> DeleteAllAsync();
+        Task<ResponseModel> CreateCepsAsync(List<Cep> objCeps);
+        Task<ResponseModel> DeleteAllAsync();
 
     }
 }

@@ -5,16 +5,17 @@ namespace ScrapperWebApp.Services.Interfaces
 {
     public interface IFiltroService
     {
-        Task<Filtro> GetFirstFiltrosAsync();
+        Task<ResponseModel> GetFirstFiltrosAsync();
 
-        Task<List<Filtro>> GetFiltrosAsync();
-        Task<List<Filtro>> GetFiltrosWhereAsync();
+        Task<ResponseModel> GetFiltrosAsync();
+        Task<ResponseModel> GetFiltrosWhereAsync();
 
-        Task<Filtro> CreateFiltroAsync(Filtro objFiltro);
+        Task<ResponseModel> CreateFiltroAsync(Filtro objFiltro);
 
-        Task<Filtro> UpdateFiltroAsync(Filtro objFiltro);
+        Task<ResponseModel> UpdateFiltroAsync(Filtro objFiltro);
+        Task<ResponseModel> UpdateFiltroDatesAsync(Filtro objFiltro);
 
-        Task<bool> CreateFiltrosAsync(List<Filtro> objFiltros);
-        Task<bool> DeleteAllAsync();
+        Task<ResponseModel> CreateFiltrosAsync(List<Filtro> objFiltros);
+        Task<ResponseModel> DeleteAllAsync();
     }
 }

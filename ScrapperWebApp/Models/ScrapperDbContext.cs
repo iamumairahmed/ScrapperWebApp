@@ -33,11 +33,13 @@ public partial class ScrapperDbContext : DbContext
     {
         modelBuilder.Entity<Atividade>(entity =>
         {
-            entity.HasKey(e => e.NoAtividade).HasName("PK__Atividad__00E6730B1B8D8459");
+            entity.HasKey(e => e.NoAtividade).HasName("PK__Atividad__00E6730B9DBBF287");
 
             entity.ToTable("Atividade");
 
-            entity.Property(e => e.NoAtividade).HasColumnName("no_atividade");
+            entity.Property(e => e.NoAtividade)
+                .ValueGeneratedNever()
+                .HasColumnName("no_atividade");
             entity.Property(e => e.DsAtividade)
                 .HasMaxLength(255)
                 .IsUnicode(false)

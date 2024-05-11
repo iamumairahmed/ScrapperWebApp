@@ -11,7 +11,6 @@
 @inject IFiltroService filteroService
 @rendermode InteractiveServer
 
-
 <PageTitle>Scrapper</PageTitle>
 <div class="row">
     <div class="col-4">
@@ -77,6 +76,7 @@ else
     </div>
     <table class="table table-borderless">
         <thead>
+            <tr><th>Running filter @currentFilterIndex of @filtros.Count</th></tr>
             <tr>
                 <th>CEP</th>
                 <th>Data de Abertura - A partir de</th>
@@ -171,6 +171,7 @@ else
 }
 
 @code {
+    string warninngMessage = string.Empty;
     List<Filtro> filtros = new List<Filtro>();
     List<Filtro> records = new List<Filtro>();
     bool cepSeederCompleted = true;
@@ -183,9 +184,28 @@ else
     string error = string.Empty;
     string alertText = string.Empty;
     bool showAlertMessage = false;
+    int currentFilterIndex = 0;
+
     protected override async Task OnInitializedAsync()
     {
-        filtros = await @filteroService.GetFiltrosWhereAsync();
+        await GetFiltros();
+    }
+    protected async Task GetFiltros()
+    {
+        try
+        {
+            var response = await @filteroService.GetFiltrosWhereAsync();
+            if (response.Success)
+            {
+                filtros = response.Output;
+            }
+            else warninngMessage = response.Message;
+        }
+        catch (Exception ex)
+        {
+            warninngMessage = ex.Message;
+        }
+        
     }
     protected bool CheckIfFiltersExists()
     {
@@ -202,6 +222,7 @@ else
         foreach (var filter in filtros)
         {
             currentFilter = filter;
+            currentFilterIndex = currentFilterIndex + 1;
             showFilter = true;
             StateHasChanged();
             records = await @scrapperService.GetMainRecords(currentFilter);
@@ -216,6 +237,7 @@ else
                 //{
                 var data = await @scrapperService.GetScrappedData(filter);
                 await empresaService.CreateEmpresaAsync(data);
+                await filteroService.UpdateFiltroDatesAsync(filter);
                 //}
             }
             currentFilter = null;
@@ -242,6 +264,7 @@ else
         filtroSeederCompleted = await importService.SeedFiltroData();
         showAlertMessage = false;
         StateHasChanged();
+        await GetFiltros();
     }
     protected async void ImportCepData()
     {
@@ -251,6 +274,7 @@ else
         cepSeederCompleted = await importService.SeedCepData();
         showAlertMessage = false;
         StateHasChanged();
+        await GetFiltros();
     } 
     protected async void ImportAtivdadeData()
     {
@@ -260,5 +284,7 @@ else
         atividadeSeederCompleted = await importService.SeedAtividadeData();
         showAlertMessage = false;
         StateHasChanged();
+        await GetFiltros();
     }
+
 }

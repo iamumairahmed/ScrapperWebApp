@@ -10,7 +10,5 @@ namespace ScrapperWebApp.Models;
 public partial class Atividade
 {
     public string DsAtividade { get; set; }
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int NoAtividade { get; set; }
 }

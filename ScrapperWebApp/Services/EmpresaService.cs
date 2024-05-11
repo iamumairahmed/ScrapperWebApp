@@ -2,16 +2,19 @@
 using Microsoft.EntityFrameworkCore;
 using ScrapperWebApp.Models;
 using ScrapperWebApp.Services.Interfaces;
+using ScrapperWebApp.UnitOfWork;
 namespace ScrapperWebApp.Data
 {
     public class EmpresaService : IEmpresaService
     {
         private readonly ScrapperDbContext _context;
         private readonly IMapper _mapper;
-        public EmpresaService(ScrapperDbContext context, IMapper mapper)
+        private readonly IUnitOfWork _unitOfWork;
+        public EmpresaService(ScrapperDbContext context, IMapper mapper, IUnitOfWork unitOfWork)
         {
             _context = context;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
         public async Task<List<Empresa>> GetEmpresaAsync()
         {

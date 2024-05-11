@@ -1,48 +1,67 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ScrapperWebApp.Models;
 using ScrapperWebApp.Services.Interfaces;
+using ScrapperWebApp.UnitOfWork;
 namespace ScrapperWebApp.Services
 {
     public class CepService : ICepService
     {
         private readonly ScrapperDbContext _context;
-        public CepService(ScrapperDbContext context)
+        private readonly IUnitOfWork _unitOfWork;
+
+        public CepService(ScrapperDbContext context, IUnitOfWork unitOfWork)
         {
+            _unitOfWork = unitOfWork;
             _context = context;
         }
-        public async Task<List<Cep>> GetCepsAsync()
+        public async Task<ResponseModel> GetCepsAsync()
         {
-            return await _context.Ceps.ToListAsync();
-        }
-        public async Task<bool> CreateCepsAsync(List<Cep> objCeps)
-        {
-
-            using (var transaction = _context.Database.BeginTransaction())
+            try
             {
-                try
-                {
-
-                    //await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Cep ON");
-                    await _context.Ceps.AddRangeAsync(objCeps);
-                    _context.SaveChanges();
-                    //await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Cep OFF");
-                    transaction.Commit();
-
-
-                    //return true;
-                }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                    Console.WriteLine(ex.ToString()); return false;
-                }
+                var ceps = await _unitOfWork.Repository<Cep>()
+               .TableNoTracking
+               .ToListAsync();
+                //var appSettingsVm = _mapper.Map<List<AppSettingVm>>(appsettigs);
+                return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, ceps);
             }
-            return true;
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return ResponseModel.FailureResponse(GlobalDeclaration._internalServerError);
+            }
         }
-        public async Task<bool> DeleteAllAsync()
+        public async Task<ResponseModel> CreateCepsAsync(List<Cep> objCeps)
         {
-            await _context.Ceps.ExecuteDeleteAsync();
-            return true;
+            try
+            {
+                await _unitOfWork.Repository<Cep>().AddRangeAsync(objCeps);
+                await _unitOfWork.SaveAsync();
+                return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, objCeps);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return ResponseModel.FailureResponse(GlobalDeclaration._internalServerError);
+            }
+        }
+        public async Task<ResponseModel> DeleteAllAsync()
+        {
+            try
+            {
+                var deleted = await _unitOfWork.Repository<Cep>().Delete(x => 1 == 1);
+                if (deleted == true)
+                {
+                    await _unitOfWork.SaveAsync();
+                    return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, true);
+                }
+                else
+                    return ResponseModel.FailureResponse("Not Found");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return ResponseModel.FailureResponse(GlobalDeclaration._internalServerError);
+            }
         }
     }
 }
