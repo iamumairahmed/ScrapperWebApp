@@ -24,6 +24,10 @@
         <button @onclick="ImportFiltroData" class="btn btn-sm btn-warning">Import Filtro Data</button>
         <button @onclick="ImportCepData" class="btn btn-sm btn-warning">Import Cep Data</button>
         <button @onclick="ImportAtivdadeData" class="btn btn-sm btn-warning">Import Atividade Data</button>
+        @if (!cepSeederCompleted || !atividadeSeederCompleted || !filtroSeederCompleted)
+        {
+            <p class="m-0 text-danger"><em>An error occurred, maybe file not found. Please check file path</em></p>
+        }
         <p class="m-0"><em>Supports xlsx, xlsm format files (table will cleared before import)</em></p>
         @if (showAlertMessage)
         {
@@ -169,6 +173,9 @@ else
 @code {
     List<Filtro> filtros = new List<Filtro>();
     List<Filtro> records = new List<Filtro>();
+    bool cepSeederCompleted = true;
+    bool atividadeSeederCompleted = true;
+    bool filtroSeederCompleted = true;
     bool loader = false;
     bool showFilter = false;
     Filtro filter = new Filtro();
@@ -232,7 +239,7 @@ else
         showAlertMessage = true;
         alertText = "Filtro table data import in progress.";
         StateHasChanged();
-        await importService.SeedFiltroData();
+        filtroSeederCompleted = await importService.SeedFiltroData();
         showAlertMessage = false;
         StateHasChanged();
     }
@@ -241,7 +248,7 @@ else
         showAlertMessage = true;
         alertText = "Cep table data import in progress.";
         StateHasChanged();
-        await importService.SeedCepData();
+        cepSeederCompleted = await importService.SeedCepData();
         showAlertMessage = false;
         StateHasChanged();
     } 
@@ -250,7 +257,7 @@ else
         showAlertMessage = true;
         alertText = "Atividade table data import in progress.";
         StateHasChanged();
-        await importService.SeedAtividadeData();
+        atividadeSeederCompleted = await importService.SeedAtividadeData();
         showAlertMessage = false;
         StateHasChanged();
     }

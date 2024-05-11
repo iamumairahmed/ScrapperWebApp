@@ -46,12 +46,13 @@ public partial class ScrapperDbContext : DbContext
 
         modelBuilder.Entity<Cep>(entity =>
         {
-            entity.HasKey(e => new { e.NoCep, e.CdMunicipio }).HasName("PK__Cep__0078B6945186CFDB");
+            entity.HasKey(e => new { e.NoCep, e.CdMunicipio }).HasName("PK__Cep__0078B694D03858C7");
 
             entity.ToTable("Cep");
 
             entity.Property(e => e.NoCep)
-                .ValueGeneratedOnAdd()
+                .HasMaxLength(50)
+                .IsUnicode(false)
                 .HasColumnName("no_cep");
             entity.Property(e => e.CdMunicipio)
                 .HasMaxLength(255)
@@ -138,19 +139,28 @@ public partial class ScrapperDbContext : DbContext
             entity.Property(e => e.DtSituacao)
                 .HasColumnType("date")
                 .HasColumnName("dt_situacao");
-            entity.Property(e => e.NoCep).HasColumnName("no_cep");
-            entity.Property(e => e.NoFone).HasColumnName("no_fone");
+            entity.Property(e => e.NoCep)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("no_cep");
+            entity.Property(e => e.NoFone)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("no_fone");
             entity.Property(e => e.NoNatjur).HasColumnName("no_natjur");
             entity.Property(e => e.VlCapsocial).HasColumnName("vl_capsocial");
         });
 
         modelBuilder.Entity<Filtro>(entity =>
         {
-            entity.HasKey(e => new { e.NoCep, e.DtInicial, e.DtFinal }).HasName("PK__Filtro__94B19BA42F68B870");
+            entity.HasKey(e => new { e.NoCep, e.DtInicial, e.DtFinal }).HasName("PK__Filtro__94B19BA4EBBC1B16");
 
             entity.ToTable("Filtro");
 
-            entity.Property(e => e.NoCep).HasColumnName("no_cep");
+            entity.Property(e => e.NoCep)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("no_cep");
             entity.Property(e => e.DtInicial)
                 .HasColumnType("date")
                 .HasColumnName("dt_inicial");

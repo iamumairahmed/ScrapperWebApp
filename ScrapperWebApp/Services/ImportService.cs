@@ -21,11 +21,11 @@ namespace ScrapperWebApp.Services
         }
 
         public async Task<bool> SeedFiltroData(){
-            var filepath = @"D:\Fiverr\SamuelRoncetti\Filtro Short.xlsm";
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             List<Filtro> list = new List<Filtro>();
             try
             {
+                var filepath = @"D:\Fiverr\SamuelRoncetti\Filtro Short.xlsm";
                 using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
                 {
                     using (var reader = ExcelReaderFactory.CreateReader(streamval))
@@ -51,7 +51,7 @@ namespace ScrapperWebApp.Services
                                 string date_start = row[1].ToString();
                                 string date_end = row[2].ToString();
 
-                                obj.NoCep = int.Parse(value);
+                                obj.NoCep = value;
                                 obj.DtInicial = DateTime.Parse(date_start);
                                 obj.DtFinal = DateTime.Parse(date_end);
                                 list.Add(obj);
@@ -87,116 +87,131 @@ namespace ScrapperWebApp.Services
         }
         public async Task<bool> SeedAtividadeData()
         {
-            var filepath = @"D:\Fiverr\SamuelRoncetti\Atividade (2).xlsx";
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-            List<Atividade> list = new List<Atividade>();
-            using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
+            try
             {
-                using (var reader = ExcelReaderFactory.CreateReader(streamval))
+                var filepath = @"D:\Fiverr\SamuelRoncetti\Atividade (2).xlsx";
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                List<Atividade> list = new List<Atividade>();
+                using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
                 {
-                    var configuration = new ExcelDataSetConfiguration
+                    using (var reader = ExcelReaderFactory.CreateReader(streamval))
                     {
-                        ConfigureDataTable = _ => new ExcelDataTableConfiguration
+                        var configuration = new ExcelDataSetConfiguration
                         {
-                            UseHeaderRow = false
-                        }
-                    };
-                    var dataSet = reader.AsDataSet(configuration);
+                            ConfigureDataTable = _ => new ExcelDataTableConfiguration
+                            {
+                                UseHeaderRow = false
+                            }
+                        };
+                        var dataSet = reader.AsDataSet(configuration);
 
-                    if (dataSet.Tables.Count > 0)
-                    {
-                        var dataTable = dataSet.Tables[0];
-                        Console.WriteLine("Rows : " + dataTable.Rows.Count);
-                        Console.WriteLine("Columns : " + dataTable.Columns.Count);
-                        foreach (DataRow row in dataTable.Rows)
+                        if (dataSet.Tables.Count > 0)
                         {
-                            Atividade obj = new Atividade();
-                            string noAtividade = row[0].ToString();
-                            string dsAtividade = row[1].ToString();
+                            var dataTable = dataSet.Tables[0];
+                            Console.WriteLine("Rows : " + dataTable.Rows.Count);
+                            Console.WriteLine("Columns : " + dataTable.Columns.Count);
+                            foreach (DataRow row in dataTable.Rows)
+                            {
+                                Atividade obj = new Atividade();
+                                string noAtividade = row[0].ToString();
+                                string dsAtividade = row[1].ToString();
 
-                            obj.NoAtividade = int.Parse(noAtividade);
-                            obj.DsAtividade = dsAtividade;
-                            list.Add(obj);
+                                obj.NoAtividade = int.Parse(noAtividade);
+                                obj.DsAtividade = dsAtividade;
+                                list.Add(obj);
+                            }
                         }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Sheet doesn't exist");
-                        return false;
-                    }
+                        else
+                        {
+                            Console.WriteLine("Sheet doesn't exist");
+                            return false;
+                        }
 
-                    if (list.Count > 0)
-                    {
-                        await _atividadeService.DeleteAllAsync();
-                        await _atividadeService.CreateAtividadesAsync(list);
-                    }
-                    else
-                    {
-                        Console.WriteLine("No Data Found!");
-                        return false;
+                        if (list.Count > 0)
+                        {
+                            await _atividadeService.DeleteAllAsync();
+                            await _atividadeService.CreateAtividadesAsync(list);
+                        }
+                        else
+                        {
+                            Console.WriteLine("No Data Found!");
+                            return false;
+                        }
                     }
                 }
+            } catch (Exception ex) 
+            {
+                Console.WriteLine(ex.Message);
+                return false;
             }
             return true;
         }
         public async Task<bool> SeedCepData()
         {
-            var filepath = @"D:\Fiverr\SamuelRoncetti\Cep r02.xlsm";
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-            List<Cep> list = new List<Cep>();
-            using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
+            try
             {
-                using (var reader = ExcelReaderFactory.CreateReader(streamval))
+                var filepath = @"D:\Fiverr\SamuelRoncetti\Cep r02.xlsm";
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                List<Cep> list = new List<Cep>();
+                using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
                 {
-                    var configuration = new ExcelDataSetConfiguration
+                    using (var reader = ExcelReaderFactory.CreateReader(streamval))
                     {
-                        ConfigureDataTable = _ => new ExcelDataTableConfiguration
+                        var configuration = new ExcelDataSetConfiguration
                         {
-                            UseHeaderRow = false
-                        }
-                    };
-                    var dataSet = reader.AsDataSet(configuration);
+                            ConfigureDataTable = _ => new ExcelDataTableConfiguration
+                            {
+                                UseHeaderRow = false
+                            }
+                        };
+                        var dataSet = reader.AsDataSet(configuration);
 
-                    if (dataSet.Tables.Count > 0)
-                    {
-                        var dataTable = dataSet.Tables[0];
-                        Console.WriteLine("Rows : " + dataTable.Rows.Count);
-                        Console.WriteLine("Columns : " + dataTable.Columns.Count);
-                        foreach (DataRow row in dataTable.Rows)
+                        if (dataSet.Tables.Count > 0)
                         {
-                            Cep obj = new Cep();
-                            string nocep = row[0].ToString();
-                            string cdLogradouro = row[1].ToString();
-                            string cdBairro = row[2].ToString();
-                            string cdMunicipio = row[3].ToString();
-                            string cdEstado = row[4].ToString();
+                            var dataTable = dataSet.Tables[0];
+                            Console.WriteLine("Rows : " + dataTable.Rows.Count);
+                            Console.WriteLine("Columns : " + dataTable.Columns.Count);
+                            foreach (DataRow row in dataTable.Rows)
+                            {
+                                Cep obj = new Cep();
+                                string nocep = row[0].ToString();
+                                string cdLogradouro = row[1].ToString();
+                                string cdBairro = row[2].ToString();
+                                string cdMunicipio = row[3].ToString();
+                                string cdEstado = row[4].ToString();
 
-                            obj.NoCep = int.Parse(nocep);
-                            obj.CdLogradouro = cdLogradouro;
-                            obj.CdBairro = cdBairro;
-                            obj.CdMunicipio = cdMunicipio;
-                            obj.CdEstado = cdEstado;
+                                obj.NoCep = nocep;
+                                obj.CdLogradouro = cdLogradouro;
+                                obj.CdBairro = cdBairro;
+                                obj.CdMunicipio = cdMunicipio;
+                                obj.CdEstado = cdEstado;
 
-                            list.Add(obj);
+                                list.Add(obj);
+                            }
                         }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Sheet doesn't exist");
-                        return false;
-                    }
+                        else
+                        {
+                            Console.WriteLine("Sheet doesn't exist");
+                            return false;
+                        }
 
-                    if (list.Count > 0)
-                    {
-                        await _cepService.DeleteAllAsync();
-                        await _cepService.CreateCepsAsync(list);
-                    }
-                    else
-                    {
-                        Console.WriteLine("No Data Found!");
-                        return false;
+                        if (list.Count > 0)
+                        {
+                            await _cepService.DeleteAllAsync();
+                            await _cepService.CreateCepsAsync(list);
+                        }
+                        else
+                        {
+                            Console.WriteLine("No Data Found!");
+                            return false;
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
             }
             return true;
         }

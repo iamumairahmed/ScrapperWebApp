@@ -117,7 +117,7 @@ namespace ScrapperWebApp.Services
             obj.VlCapsocial = 10000;
             obj.NoNatjur = 2062;
             obj.CdLogra = "ESTRADA DA GAVEA";
-            obj.NoCep = 00640;
+            obj.NoCep = "00640";
             obj.CdEmail = "test@gmail.com";
 
 

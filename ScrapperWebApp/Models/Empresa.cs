@@ -29,7 +29,7 @@ public partial class Empresa
 
     public string CdNumero { get; set; }
 
-    public long? NoCep { get; set; }
+    public string NoCep { get; set; }
 
     public string NoFone { get; set; }
 

@@ -15,6 +15,6 @@ public partial class Cep
     public string CdMunicipio { get; set; }
 
     public string CdEstado { get; set; }
-    [Key]
-    public long NoCep { get; set; }
+
+    public string NoCep { get; set; }
 }

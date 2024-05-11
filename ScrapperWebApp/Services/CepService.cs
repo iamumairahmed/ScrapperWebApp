@@ -22,10 +22,10 @@ namespace ScrapperWebApp.Services
                 try
                 {
 
-                    await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Cep ON");
+                    //await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Cep ON");
                     await _context.Ceps.AddRangeAsync(objCeps);
                     _context.SaveChanges();
-                    await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Cep OFF");
+                    //await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Cep OFF");
                     transaction.Commit();
 
 

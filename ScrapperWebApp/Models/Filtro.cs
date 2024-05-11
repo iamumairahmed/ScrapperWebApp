@@ -9,7 +9,7 @@ namespace ScrapperWebApp.Models;
 
 public partial class Filtro
 {
-    public int NoCep { get; set; }
+    public string NoCep { get; set; }
 
     public DateTime DtInicial { get; set; }
 
