@@ -3,26 +3,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ScrapperWebApp.Models;
 using ScrapperWebApp.Services.Interfaces;
-using ScrapperWebApp.UnitOfWork;
 namespace ScrapperWebApp.Services
 {
     public class FiltroService : IFiltroService
     {
-        private readonly ScrapperDbContext _context;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IDbContextFactory<ScrapperDbContext> _context;
         private readonly IMapper _mapper;
-        public FiltroService(ScrapperDbContext context, IUnitOfWork unitOfWork)
+        public FiltroService(IDbContextFactory<ScrapperDbContext> context)
         {
-            _unitOfWork = unitOfWork;
             _context = context;
         }
         public async Task<ResponseModel> GetFirstFiltrosAsync()
         {
             try
             {
-                var filtro = await _unitOfWork.Repository<Filtro>()
-               .TableNoTracking
-               .FirstOrDefaultAsync();
+                var ctx = _context.CreateDbContext();
+
+                var filtro = await ctx.Filtros.FirstOrDefaultAsync();
                 //var appSettingsVm = _mapper.Map<List<AppSettingVm>>(appsettigs);
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, filtro);
             }
@@ -36,10 +33,9 @@ namespace ScrapperWebApp.Services
         public async Task<ResponseModel> GetFiltrosAsync()
         {
             try
-            {
-                var filtros = await _unitOfWork.Repository<Filtro>()
-               .TableNoTracking
-               .ToListAsync();
+            { 
+                var ctx = _context.CreateDbContext();
+                var filtros = await ctx.Filtros.ToListAsync();
                 //var appSettingsVm = _mapper.Map<List<AppSettingVm>>(appsettigs);
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, filtros);
             }
@@ -54,8 +50,10 @@ namespace ScrapperWebApp.Services
         {
             try
             {
+                var ctx = _context.CreateDbContext();
+
                 //var filtros = _unitOfWork.Repository<Filtro>().GetMany(x => x.NoContador > 1000 && x.DtInicial < DateTime.Now).ToList();
-                var filtros = _unitOfWork.Repository<Filtro>().GetAll().ToList();
+                var filtros = ctx.Filtros.ToList();
                 if (filtros != null)
                 {
                     //var filtrosMapped = _mapper.Map<Filtro>(filtros);
@@ -73,10 +71,12 @@ namespace ScrapperWebApp.Services
         public async Task<ResponseModel> CreateFiltroAsync(Filtro objFiltro)
         {
             //var filtro = mapper.Map<AppSetting>(appSettingVm);
+            var ctx = _context.CreateDbContext();
+
             try
             {
-                await _unitOfWork.Repository<Filtro>().AddAsync(objFiltro);
-                await _unitOfWork.SaveAsync();
+                await ctx.AddAsync(objFiltro);
+                await ctx.SaveChangesAsync();
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, objFiltro);
             }
             catch (Exception ex)
@@ -89,7 +89,8 @@ namespace ScrapperWebApp.Services
         {
             try
             {
-                var filtroFromDb = _context.Filtros.Where(f => f.NoCep == objFiltro.NoCep && f.DtInicial == objFiltro.DtInicial && f.DtFinal == objFiltro.DtFinal).FirstOrDefault();
+                var ctx = _context.CreateDbContext();
+                var filtroFromDb = ctx.Filtros.Where(f => f.NoCep == objFiltro.NoCep && f.DtInicial == objFiltro.DtInicial && f.DtFinal == objFiltro.DtFinal).FirstOrDefault();
                 if (filtroFromDb == null)
                 {
                     return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, filtroFromDb);
@@ -98,8 +99,8 @@ namespace ScrapperWebApp.Services
                 {
                     filtroFromDb.NoContador = objFiltro.NoContador;
                     filtroFromDb.DtExecucao = objFiltro.DtExecucao;
-                    _unitOfWork.Repository<Filtro>().Update(filtroFromDb);
-                    await _unitOfWork.SaveAsync();
+                    ctx.Update(filtroFromDb);
+                    await ctx.SaveChangesAsync();
                     return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, true);
                 }
             }
@@ -113,7 +114,8 @@ namespace ScrapperWebApp.Services
         {
             try
             {
-                var filtroFromDb = _context.Filtros.Where(f => f.NoCep == objFiltro.NoCep && f.DtInicial == objFiltro.DtInicial && f.DtFinal == objFiltro.DtFinal).FirstOrDefault();
+                var ctx = _context.CreateDbContext();
+                var filtroFromDb = ctx.Filtros.Where(f => f.NoCep == objFiltro.NoCep && f.DtInicial == objFiltro.DtInicial && f.DtFinal == objFiltro.DtFinal).FirstOrDefault();
                 if (filtroFromDb == null)
                 {
                     return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, filtroFromDb);
@@ -145,8 +147,10 @@ namespace ScrapperWebApp.Services
 
             try
             {
-                await _unitOfWork.Repository<Filtro>().AddRangeAsync(objFiltros);
-                await _unitOfWork.SaveAsync();
+                var ctx = _context.CreateDbContext();
+
+                await ctx.Filtros.AddRangeAsync(objFiltros);
+                await ctx.SaveChangesAsync();
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, objFiltros);
             }
             catch (Exception ex)
@@ -182,14 +186,16 @@ namespace ScrapperWebApp.Services
         {
             try
             {
-                var deleted = await _unitOfWork.Repository<Filtro>().Delete(x =>  1 == 1);
-                if (deleted == true)
-                {
-                    await _unitOfWork.SaveAsync();
+                var ctx = _context.CreateDbContext();
+
+                var deleted = await ctx.Filtros.ExecuteDeleteAsync();
+                //if (deleted == true)
+                //{
+                 //   await _unitOfWork.SaveAsync();
                     return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, true);
-                }
-                else
-                    return ResponseModel.FailureResponse("Not Found");
+                //}
+                //else
+                //    return ResponseModel.FailureResponse("Not Found");
             }
             catch (Exception ex)
             {
@@ -204,19 +210,23 @@ namespace ScrapperWebApp.Services
         {
             try
             {
-                var filtroFromDb = _context.Filtros.Where(f => f.NoCep == objFiltro.NoCep && f.DtInicial == objFiltro.DtInicial && f.DtFinal == objFiltro.DtFinal).FirstOrDefault();
+                var ctx = _context.CreateDbContext();
+
+                var filtroFromDb = ctx.Filtros.Where(f => f.NoCep == objFiltro.NoCep && f.DtInicial == objFiltro.DtInicial && f.DtFinal == objFiltro.DtFinal).FirstOrDefault();
                 if (filtroFromDb != null)
                 {
-                    var deleted = await _unitOfWork.Repository<Filtro>().Delete(filtroFromDb);
-                    if (deleted == true)
-                    {
-                        await _unitOfWork.SaveAsync();
+                    ctx.Filtros.Remove(filtroFromDb);
+                    await ctx.SaveChangesAsync();
+                    //var deleted = await _unitOfWork.Repository<Filtro>().Delete(filtroFromDb);
+                    //if (deleted == true)
+                    //{
+                    //    await _unitOfWork.SaveAsync();
                         return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, null);
-                    }
-                    else 
-                    {
-                        return ResponseModel.FailureResponse("Could not delete");
-                    }
+                    //}
+                    //else 
+                    //{
+                    //    return ResponseModel.FailureResponse("Could not delete");
+                   // }
                 }
                 else
                     return ResponseModel.FailureResponse("Not Found");

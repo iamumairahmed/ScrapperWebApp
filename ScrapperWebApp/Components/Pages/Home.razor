@@ -107,33 +107,7 @@ else
             <div class="alert alert-dark text-center" role="alert">Step 02 - API 02</div>
         </div>
     </div>
-    @* <div class="row">
-        <div class="col-12">
-            <button @onclick="ScrapeDetails" class="btn btn-primary">Start Process</button>
-        </div>
-    </div> *@
-    @* <table class="table">
-        <thead>
-            <tr>
-                <th>CNPJ</th>
-                <th>Razao Social</th>
-                <th>Situacao</th>
-                <th>Total de Registros</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var filter in filtros.Take(20))
-            {
-                <tr>
-                    <td>@filter.NoCep</td>
-                    <td>@filter.DtInicial</td>
-                    <td>@filter.DtFinal</td>
-                    <td>@filter.NoContador</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-    <hr /> *@
+    
     <table class="table">
         <thead>
             <tr>
@@ -214,11 +188,8 @@ else
     protected async void GetScrappedData()
     {
         loader = true;
-        //filter = await filteroService.GetFirstFiltrosAsync();
-
-        //currentFilter.NoCep = 29101010;
-        //currentFilter.DtInicial = DateTime.Parse("2023-02-28");
-        //currentFilter.DtFinal = DateTime.Parse("2024-04-27");
+        
+        // loop to iterate all filters
         foreach (var filter in filtros)
         {
             currentFilter = filter;
@@ -233,12 +204,14 @@ else
             }
             else
             {
-                //foreach (var record in records)
-                //{
+                // Get Scrapped results
                 var data = await @scrapperService.GetScrappedData(filter);
+
+                // Save Parsed results to Empresa and linked tables
                 await empresaService.CreateEmpresaAsync(data);
+
+                // Add 1 day to dt_inicial and dt_final
                 await filteroService.UpdateFiltroDatesAsync(filter);
-                //}
             }
             currentFilter = null;
             showFilter = false;

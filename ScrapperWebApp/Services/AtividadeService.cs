@@ -1,27 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ScrapperWebApp.Models;
 using ScrapperWebApp.Services.Interfaces;
-using ScrapperWebApp.UnitOfWork;
 namespace ScrapperWebApp.Data
 {
     public class AtividadeService : IAtividadeService
     {
-        private readonly ScrapperDbContext _context;
-        private readonly IUnitOfWork _unitOfWork;
-        public AtividadeService(ScrapperDbContext context, IUnitOfWork unitOfWork)
+        private readonly IDbContextFactory<ScrapperDbContext> _context;
+        public AtividadeService(IDbContextFactory<ScrapperDbContext> context)
         {
             _context = context;
-            _unitOfWork = unitOfWork;
         }
         public async Task<ResponseModel> GetAtividadesAsync()
         {
             try
             {
-                var filtros = await _unitOfWork.Repository<Atividade>()
-               .TableNoTracking
-               .ToListAsync();
+                var ctx = _context.CreateDbContext();
+                var atividades = await ctx.Atividades.ToListAsync();
                 //var appSettingsVm = _mapper.Map<List<AppSettingVm>>(appsettigs);
-                return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, filtros);
+                return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, atividades);
             }
             catch (Exception ex)
             {
@@ -33,8 +29,9 @@ namespace ScrapperWebApp.Data
         {
             try
             {
-                await _unitOfWork.Repository<Atividade>().AddRangeAsync(objAtividade);
-                await _unitOfWork.SaveAsync();
+                var ctx = _context.CreateDbContext();
+                await ctx.Atividades.AddRangeAsync(objAtividade);
+                await ctx.SaveChangesAsync();
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, objAtividade);
             }
             catch (Exception ex)
@@ -65,10 +62,11 @@ namespace ScrapperWebApp.Data
         {
             try
             {
-                var deleted = await _unitOfWork.Repository<Atividade>().Delete(x => 1 == 1);
-                if (deleted == true)
+                var ctx = _context.CreateDbContext();
+                var deleted = await ctx.Atividades.ExecuteDeleteAsync();
+                if (deleted > 0)
                 {
-                    await _unitOfWork.SaveAsync();
+                    await ctx.SaveChangesAsync();
                     return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, true);
                 }
                 else

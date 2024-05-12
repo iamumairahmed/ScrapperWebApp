@@ -2,10 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using ScrapperWebApp;
 using ScrapperWebApp.Components;
 using ScrapperWebApp.Data;
-using ScrapperWebApp.Repository;
+using ScrapperWebApp.Models;
 using ScrapperWebApp.Services;
 using ScrapperWebApp.Services.Interfaces;
-using ScrapperWebApp.UnitOfWork;
 using System;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,12 +14,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 
-builder.Services.AddDbContext<ScrapperWebApp.Models.ScrapperDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-}, ServiceLifetime.Scoped);
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+//builder.Services.AddDbContext<ScrapperWebApp.Models.ScrapperDbContext>(options =>
+//{
+//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+//}, ServiceLifetime.Transient);
+
+var cs = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContextFactory<ScrapperDbContext>(options => options.UseSqlServer(cs));
+
 builder.Services.AddScoped<IFiltroService, FiltroService>();
 builder.Services.AddScoped<IAtividadeService, AtividadeService>();
 builder.Services.AddScoped<ICepService, CepService>();

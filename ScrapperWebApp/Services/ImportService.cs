@@ -39,8 +39,6 @@ namespace ScrapperWebApp.Services
                         if (dataSet.Tables.Count > 0)
                         {
                             var dataTable = dataSet.Tables[0];
-                            Console.WriteLine("Rows : " + dataTable.Rows.Count);
-                            Console.WriteLine("Columns : " + dataTable.Columns.Count);
                             foreach (DataRow row in dataTable.Rows)
                             {
                                 Filtro obj = new Filtro();
@@ -105,8 +103,6 @@ namespace ScrapperWebApp.Services
                         if (dataSet.Tables.Count > 0)
                         {
                             var dataTable = dataSet.Tables[0];
-                            Console.WriteLine("Rows : " + dataTable.Rows.Count);
-                            Console.WriteLine("Columns : " + dataTable.Columns.Count);
                             foreach (DataRow row in dataTable.Rows)
                             {
                                 Atividade obj = new Atividade();
@@ -166,8 +162,6 @@ namespace ScrapperWebApp.Services
                         if (dataSet.Tables.Count > 0)
                         {
                             var dataTable = dataSet.Tables[0];
-                            Console.WriteLine("Rows : " + dataTable.Rows.Count);
-                            Console.WriteLine("Columns : " + dataTable.Columns.Count);
                             foreach (DataRow row in dataTable.Rows)
                             {
                                 Cep obj = new Cep();
