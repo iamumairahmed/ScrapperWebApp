@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer.Infrastructure.Internal;
 using ScrapperWebApp;
 using ScrapperWebApp.Components;
 using ScrapperWebApp.Data;
@@ -20,7 +21,7 @@ builder.Services.AddRazorComponents()
 //}, ServiceLifetime.Transient);
 
 var cs = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContextFactory<ScrapperDbContext>(options => options.UseSqlServer(cs));
+builder.Services.AddDbContextFactory<ScrapperDbContext>(options => options.UseSqlServer(cs, options => options.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<IFiltroService, FiltroService>();
 builder.Services.AddScoped<IAtividadeService, AtividadeService>();
