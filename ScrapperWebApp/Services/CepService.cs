@@ -1,26 +1,22 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ScrapperWebApp.Models;
 using ScrapperWebApp.Services.Interfaces;
-using ScrapperWebApp.UnitOfWork;
 namespace ScrapperWebApp.Services
 {
     public class CepService : ICepService
     {
-        private readonly ScrapperDbContext _context;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IDbContextFactory<ScrapperDbContext> _context;
 
-        public CepService(ScrapperDbContext context, IUnitOfWork unitOfWork)
+        public CepService(IDbContextFactory<ScrapperDbContext> context)
         {
-            _unitOfWork = unitOfWork;
             _context = context;
         }
         public async Task<ResponseModel> GetCepsAsync()
         {
             try
             {
-                var ceps = await _unitOfWork.Repository<Cep>()
-               .TableNoTracking
-               .ToListAsync();
+                var ctx = _context.CreateDbContext();
+                var ceps = await ctx.Ceps.ToListAsync();
                 //var appSettingsVm = _mapper.Map<List<AppSettingVm>>(appsettigs);
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, ceps);
             }
@@ -34,8 +30,9 @@ namespace ScrapperWebApp.Services
         {
             try
             {
-                await _unitOfWork.Repository<Cep>().AddRangeAsync(objCeps);
-                await _unitOfWork.SaveAsync();
+                var ctx = _context.CreateDbContext();
+                await ctx.Ceps.AddRangeAsync(objCeps);
+                await ctx.SaveChangesAsync();
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, objCeps);
             }
             catch (Exception ex)
@@ -48,10 +45,11 @@ namespace ScrapperWebApp.Services
         {
             try
             {
-                var deleted = await _unitOfWork.Repository<Cep>().Delete(x => 1 == 1);
-                if (deleted == true)
+                var ctx = _context.CreateDbContext();
+                var deleted = await ctx.Ceps.ExecuteDeleteAsync();
+                if (deleted > 0)
                 {
-                    await _unitOfWork.SaveAsync();
+                    await ctx.SaveChangesAsync();
                     return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, true);
                 }
                 else

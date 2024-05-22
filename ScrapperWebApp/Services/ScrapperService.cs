@@ -25,7 +25,7 @@ namespace ScrapperWebApp.Services
             requestObject.query.situacao_cadastral = "ATIVA";
             requestObject.query.cep = [filtro.NoCep.ToString()];
             //2024-04-27
-            requestObject.range_query.data_abertura.lte = filtro.DtFinal.ToString("yyyy-MM-dd"); 
+            requestObject.range_query.data_abertura.lte = filtro.DtFinal.ToString("yyyy-MM-dd");
             requestObject.range_query.data_abertura.gte = filtro.DtInicial.ToString("yyyy-MM-dd");
             requestObject.page = 1;
 
@@ -45,7 +45,7 @@ namespace ScrapperWebApp.Services
                     return new List<Empresa>();
                 }
                 // API_1000
-                else if (responseObject.data.count > 1000) 
+                else if (responseObject.data.count > 1000)
                 {
                     // Do Nothing
                 }
@@ -99,49 +99,49 @@ namespace ScrapperWebApp.Services
                     }
                 }
             }
-            else 
+            else
             {
                 return null;
             }
 
             return data;
 
-            var obj = new Empresa();
-            obj.NoCnpj = 2;
-            obj.CdRzsocial = "MS CONTA MAIS";
-            obj.CdTipo = "MATRIZ";
-            obj.CdFantasia = "MAPAL";
-            obj.DtAbertura = DateTime.Today;
-            obj.CdSituacao = "ATIVA";
-            obj.DtSituacao = DateTime.Today;
-            obj.VlCapsocial = 10000;
-            obj.NoNatjur = 2062;
-            obj.CdLogra = "ESTRADA DA GAVEA";
-            obj.NoCep = "00640";
-            obj.CdEmail = "test@gmail.com";
+            //var obj = new Empresa();
+            //obj.NoCnpj = 2;
+            //obj.CdRzsocial = "MS CONTA MAIS";
+            //obj.CdTipo = "MATRIZ";
+            //obj.CdFantasia = "MAPAL";
+            //obj.DtAbertura = DateTime.Today;
+            //obj.CdSituacao = "ATIVA";
+            //obj.DtSituacao = DateTime.Today;
+            //obj.VlCapsocial = 10000;
+            //obj.NoNatjur = 2062;
+            //obj.CdLogra = "ESTRADA DA GAVEA";
+            //obj.NoCep = "00640";
+            //obj.CdEmail = "test@gmail.com";
 
 
-            var socioObj = new Socio();
-            socioObj.DsSocio = "FLAVIA ARAUJO";
-            socioObj.DsTpSocio = "Socio-Administrator";
-            socioObj.NoCnpj = 2;
+            //var socioObj = new Socio();
+            //socioObj.DsSocio = "FLAVIA ARAUJO";
+            //socioObj.DsTpSocio = "Socio-Administrator";
+            //socioObj.NoCnpj = 2;
 
-            obj.Socios.Add(socioObj);
+            //obj.Socios.Add(socioObj);
 
-            socioObj.DsSocio = "FLAVIA ARAUJO 2";
-            socioObj.DsTpSocio = "Socio-Administrator 2";
-            socioObj.NoCnpj = 2;
-            obj.Socios.Add(socioObj);
+            //socioObj.DsSocio = "FLAVIA ARAUJO 2";
+            //socioObj.DsTpSocio = "Socio-Administrator 2";
+            //socioObj.NoCnpj = 2;
+            //obj.Socios.Add(socioObj);
 
-            var atividadeObj = new EmpAtividade();
-            atividadeObj.NoAtividade = 124;
-            atividadeObj.CdAtvPrincipal = "YES";
-            atividadeObj.NoCnpj = 1;
+            //var atividadeObj = new EmpAtividade();
+            //atividadeObj.NoAtividade = 124;
+            //atividadeObj.CdAtvPrincipal = "YES";
+            //atividadeObj.NoCnpj = 1;
 
-            obj.EmpAtividades.Add(atividadeObj);
+            //obj.EmpAtividades.Add(atividadeObj);
 
-            data.Add(obj);
-            return data;
+            //data.Add(obj);
+            //return data;
         }
         public async Task<List<Filtro>> GetMainRecords(Filtro filtro)
         {
