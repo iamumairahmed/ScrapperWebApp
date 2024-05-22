@@ -10,11 +10,13 @@ namespace ScrapperWebApp.Services
         private IFiltroService _filtroService;
         private ICepService _cepService;
         private IAtividadeService _atividadeService;
-        public ImportService(IFiltroService filtroService, IAtividadeService atividadeService, ICepService cepService)
+        private IConfiguration _configurationManager;
+        public ImportService(IFiltroService filtroService, IAtividadeService atividadeService, ICepService cepService, IConfiguration configurationManager)
         {
             _filtroService = filtroService;
             _atividadeService = atividadeService;
             _cepService = cepService;
+            _configurationManager = configurationManager;
         }
 
         public async Task<bool> SeedFiltroData(){
@@ -22,7 +24,7 @@ namespace ScrapperWebApp.Services
             List<Filtro> list = new List<Filtro>();
             try
             {
-                var filepath = @"D:\Fiverr\SamuelRoncetti\Filtro Short.xlsm";
+                var filepath = _configurationManager["DirectoryPath"] + "Filtro Short.xlsm";
                 using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
                 {
                     using (var reader = ExcelReaderFactory.CreateReader(streamval))
@@ -84,7 +86,7 @@ namespace ScrapperWebApp.Services
         {
             try
             {
-                var filepath = @"D:\Fiverr\SamuelRoncetti\Atividade (2).xlsx";
+                var filepath = _configurationManager["DirectoryPath"] + "Atividade (2).xlsx";
                 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
                 List<Atividade> list = new List<Atividade>();
                 using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
@@ -143,7 +145,7 @@ namespace ScrapperWebApp.Services
         {
             try
             {
-                var filepath = @"D:\Fiverr\SamuelRoncetti\Cep r02.xlsm";
+                var filepath = _configurationManager["DirectoryPath"] + "Cep r02.xlsm";
                 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
                 List<Cep> list = new List<Cep>();
                 using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
