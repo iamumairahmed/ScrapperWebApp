@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ScrapperWebApp.Models;
 using ScrapperWebApp.Services.Interfaces;
+using System.Collections.Generic;
 namespace ScrapperWebApp.Data
 {
     public class EmpresaService : IEmpresaService
@@ -56,16 +57,36 @@ namespace ScrapperWebApp.Data
             {
                 var ctx = _context.CreateDbContext();
 
-                foreach (var emp in objEmpresa)
+                var distinctList = objEmpresa.Distinct(new EmpresaEqualityComparer()).ToList();
+
+                foreach (var emp in distinctList)
                 {
-                    var emp_from_db = await ctx.Empresas.AsNoTracking().Where(x => x.NoCnpj == emp.NoCnpj).FirstOrDefaultAsync();
+                    Console.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": Saving " + emp.NoCnpj);
+
+                    var emp_from_db = await ctx.Empresas.AsNoTracking().Where(x => x.NoCnpj == emp.NoCnpj)
+                        .Include(x => x.EmpAtividades)
+                        .Include(x => x.Socios)
+                        .Include(x => x.Telefones)
+                        .FirstOrDefaultAsync();
 
                     if (emp_from_db != null)
                     {
-                        var obj = _mapper.Map<Empresa>(emp);
+                        await DeleteAsync(emp_from_db);
 
-                        ctx.Empresas.Update(obj);
+                        await ctx.Empresas.AddAsync(emp);
                         await ctx.SaveChangesAsync();
+
+                        //    var obj = _mapper.Map<Empresa>(emp);
+
+                        //    //emp_from_db.EmpAtividades.Remove(obj.EmpAtividades);
+
+                        //    ctx.Empresas.Update(emp_from_db);
+                        //    ctx.Entry(emp_from_db).State = EntityState.Modified;
+                        //    ctx.Entry(emp_from_db.Socios.GetType).State = EntityState.Modified;
+                        //    ctx.Entry(emp_from_db.EmpAtividades.GetType).State = EntityState.Modified;
+                        //    ctx.Entry(emp_from_db.Telefones.GetType).State = EntityState.Modified;
+
+                        //    await ctx.SaveChangesAsync();
 
                     }
                     else if (emp_from_db == null)
@@ -96,6 +117,19 @@ namespace ScrapperWebApp.Data
             {
                 Console.WriteLine(ex.ToString());
                 return ResponseModel.FailureResponse(GlobalDeclaration._internalServerError);
+            }
+        }
+        public class EmpresaEqualityComparer : IEqualityComparer<Empresa>
+        {
+            public bool Equals(Empresa x, Empresa y)
+            {
+                if (x == null || y == null) return false;
+                return x.NoCnpj == y.NoCnpj && x.CdRzsocial == y.CdRzsocial;
+            }
+
+            public int GetHashCode(Empresa obj)
+            {
+                return HashCode.Combine(obj.NoCnpj, obj.CdRzsocial);
             }
         }
     }

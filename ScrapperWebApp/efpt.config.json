@@ -37,6 +37,10 @@
       {
          "Name": "[dbo].[Socios]",
          "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Telefone]",
+         "ObjectType": 0
       }
    ],
    "UiHint": null,

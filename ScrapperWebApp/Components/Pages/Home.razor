@@ -179,7 +179,7 @@ else
         {
             warninngMessage = ex.Message;
         }
-        
+
     }
     protected bool CheckIfFiltersExists()
     {
@@ -188,7 +188,7 @@ else
     protected async void GetScrappedData()
     {
         loader = true;
-        
+
         // loop to iterate all filters
         foreach (var filter in filtros)
         {
@@ -205,13 +205,18 @@ else
             else
             {
                 // Get Scrapped results
+                Console.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": Starting Filter " + filter.NoCep);
+
                 var data = await @scrapperService.GetScrappedData(filter);
 
                 // Save Parsed results to Empresa and linked tables
-                await empresaService.CreateEmpresaAsync(data);
-
+                if (data != null && data.Count() > 0)
+                {
+                    await empresaService.CreateEmpresaAsync(data);
+                }
                 // Add 1 day to dt_inicial and dt_final
                 await filteroService.UpdateFiltroDatesAsync(filter);
+                Console.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": Ending Filter " + filter.NoCep);
             }
             currentFilter = null;
             showFilter = false;
