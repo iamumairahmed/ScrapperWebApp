@@ -6,5 +6,6 @@ namespace ScrapperWebApp.Services.Interfaces
     {
         Task<List<Empresa>> GetScrappedData(Filtro filtro);
         Task<List<Filtro>> GetMainRecords(Filtro filtro);
+        Task<bool> CheckRegistered();
     }
 }
