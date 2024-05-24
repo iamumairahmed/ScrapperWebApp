@@ -20,6 +20,7 @@
         
     </div>
     <div class="col-6 text-right" style="text-align: right !important">
+        <button @onclick="CheckRegisteredUsers" class="btn btn-sm btn-primary">Check Registered Users</button>
         <button @onclick="ImportFiltroData" class="btn btn-sm btn-warning">Import Filtro Data</button>
         <button @onclick="ImportCepData" class="btn btn-sm btn-warning">Import Cep Data</button>
         <button @onclick="ImportAtivdadeData" class="btn btn-sm btn-warning">Import Atividade Data</button>
@@ -184,6 +185,11 @@ else
     protected bool CheckIfFiltersExists()
     {
         return filtros.Count == 0 ? true : false;
+    }
+    protected void CheckRegisteredUsers()
+    {
+        scrapperService.CheckRegistered();
+        
     }
     protected async void GetScrappedData()
     {

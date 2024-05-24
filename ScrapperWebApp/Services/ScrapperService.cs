@@ -6,6 +6,11 @@ using System.Text;
 using System.Text.Json;
 using Response = ScrapperWebApp.Models.Response;
 using System.Globalization;
+using ScrapperWebApp.Utility;
+using ExcelDataReader;
+using System.Data;
+using System.Text.RegularExpressions;
+using ClosedXML.Excel;
 using HtmlAgilityPack;
 using ScrapperWebApp.Data;
 using System;
@@ -15,8 +20,10 @@ namespace ScrapperWebApp.Services
     public class ScrapperService : IScrapperService
     {
         private IFiltroService _filtroService;
-        public ScrapperService(IFiltroService filtroService) {
+        private IConfiguration _configurationManager;
+        public ScrapperService(IFiltroService filtroService, IConfiguration configuration) {
             _filtroService = filtroService;
+            _configurationManager = configuration;
         }
 
         private string url = "https://api.casadosdados.com.br/v2/public/cnpj/search";
@@ -189,7 +196,7 @@ namespace ScrapperWebApp.Services
                     filtro.NoContador = responseObject.data.count;
                     await _filtroService.UpdateFiltroAsync(filtro);
                 }
-                
+
                 data.Add(filtro);
             }
             else
@@ -200,7 +207,7 @@ namespace ScrapperWebApp.Services
             return data;
         }
 
-        private void ScrapeDetails(string url,ref Empresa empresa) 
+        private void ScrapeDetails(string url, ref Empresa empresa)
         {
             try
             {
@@ -265,9 +272,9 @@ namespace ScrapperWebApp.Services
                     if (elemSocios != null && elemSocios.Count > 0)
                     {
                         var elem = elemSocios.FirstOrDefault().FindElements(By.XPath("following-sibling::p"));
-                        if(elem != null && elem.Count > 0) 
+                        if (elem != null && elem.Count > 0)
                         {
-                            foreach (var e in elem) 
+                            foreach (var e in elem)
                             {
                                 var tokens = e.Text.Split(" - ");
                                 var ds_socio = tokens[0];
@@ -283,7 +290,7 @@ namespace ScrapperWebApp.Services
                         }
                     }
 
-                    
+
                     var elemMainAtividades = driver.FindElements(By.XPath("//p[contains(text(), 'Atividade Principal')]"));
                     if (elemMainAtividades != null && elemMainAtividades.Count > 0)
                     {
@@ -304,7 +311,7 @@ namespace ScrapperWebApp.Services
                             }
                         }
                     }
-                    
+
                     var elemAtividades = driver.FindElements(By.XPath("//p[contains(text(), 'Atividades Secundárias')]"));
                     if (elemAtividades != null && elemAtividades.Count > 0)
                     {
@@ -512,5 +519,391 @@ namespace ScrapperWebApp.Services
             return empresa;
         }
        
+        public Task<bool> CheckRegistered()
+        {
+            try
+            {
+                var records = ReadFile();
+
+                ChromeOptions options = new ChromeOptions();
+                //options.AddArgument("--headless"); // Run Chrome in headless mode (without opening GUI)
+
+                // Initialize Chrome WebDriver
+                using (var driver = new ChromeDriver(options))
+                {
+
+                    //driver.Navigate().GoToUrl(fileUrl);
+
+                    // Login Flow 
+                    // Navigate to the website
+                    var url = "https://c6bank.my.site.com/partners/s/login/";
+                    driver.Navigate().GoToUrl(url);
+
+                    //WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
+                    driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+
+                    var employeeLabel = driver.FindElement(By.CssSelector("#sfdc_username_container"), 10);
+
+                    if (employeeLabel != null)
+                    {
+                        //wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.Id("sfdc_username_container")));
+
+                        IWebElement divElement = driver.FindElement(By.Id("sfdc_username_container"));
+                        IWebElement inputElement = divElement.FindElement(By.TagName("input"));
+
+                        if (inputElement != null)
+                        {
+                            inputElement.SendKeys("sandra.coelho.001@c6partner.com");
+                        }
+
+                        IWebElement passElement = driver.FindElement(By.Id("sfdc_password_container"));
+                        IWebElement inputPassElement = passElement.FindElement(By.TagName("input"));
+
+                        if (inputPassElement != null)
+                        {
+                            inputPassElement.SendKeys("Okbank@2024!!!");
+                        }
+
+                        IWebElement buttonElement = driver.FindElement(By.CssSelector(".slds-button.slds-button--brand.loginButton.uiButton--none.uiButton"));
+                        if (buttonElement != null)
+                        {
+                            buttonElement.Click();
+                        }
+
+                        //var leadElem = driver.FindElements(By.XPath("//*[@id=\"commThemeNav\"]/div/div/nav/ul/li[5]"));
+                    }
+
+                    Thread.Sleep(10000);
+                    driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+                    //IWebElement verificationMsgElem = driver.FindElements(By.XPath("verifique seu dispositivo móvel"));
+                    bool verificationDone = false;
+                    while (verificationDone != true)
+                    {
+                        driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+                        //var elems = driver.FindElements(By.XPath("verifique seu dispositivo móvel"));
+                        var elements = driver.FindElements(By.XPath("//h2[contains(text(), 'Verifique seu dispositivo móvel')]"));
+                        var elementss = driver.FindElements(By.XPath("//h2[contains(text(), 'Solicitação cancelada')]"));
+                        var problemElements = driver.FindElements(By.XPath("//h2[contains(text(), 'Problema ao aprovar sua solicitação')]"));
+                        if ((problemElements != null || problemElements.Count > 0))
+                        {
+                            var filtered_elements = problemElements.Where(x => x.Text != "");
+                            if (filtered_elements == null || filtered_elements.Count() == 0)
+                            {
+
+                            }
+                            else
+                            {
+                                Console.WriteLine("Problema ao aprovar sua solicitação");
+                                driver.Quit();
+                                return Task.FromResult(false);
+                            }
+                        }
+                        if ((elementss != null || elementss.Count > 0))
+                        {
+                            var filtered_elements = elementss.Where(x => x.Text != "");
+                            if (filtered_elements == null || filtered_elements.Count() == 0)
+                            {
+
+                            }
+                            else
+                            {
+                                Console.WriteLine("Solicitação cancelada");
+                                driver.Quit();
+                                return Task.FromResult(false);
+                            }
+                        }
+                        // "Verifique seu dispositivo móvel"
+                        // Solicitação cancelada
+                        if (elements == null || elements.Count == 0) 
+                        {
+                            verificationDone = true;
+                        }
+                        // Keep looping until Enter key is pressed
+                    }
+
+                    //Console.WriteLine("Press Enter to Continue to Leads Page...");
+                    //while (Console.ReadKey(true).Key != ConsoleKey.Enter)
+                    //{
+                    // Keep looping until Enter key is pressed
+                    //}
+
+                    Thread.Sleep(5000);
+                    IWebElement leadLink = driver.FindElement(By.XPath("//a[text()='Leads']"));
+                    if (leadLink != null)
+                    {
+                        leadLink.Click();
+                    }
+
+                    Thread.Sleep(5000);
+                    //driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+
+                    IWebElement novoLEadElem = driver.FindElement(By.CssSelector(".createRecordWrapper.forceCommunityCreateRecordButton"));
+                    if (novoLEadElem != null)
+                    {
+                        novoLEadElem.Click();
+                    }
+                    Thread.Sleep(3000);
+                    foreach (var r in records)
+                    {
+                        try {
+                            IWebElement firstnameElem = driver.FindElement(By.CssSelector(".firstName.compoundBorderBottom.form-element__row.input"));
+                            if (firstnameElem != null)
+                            {
+                                firstnameElem.Clear();
+                                firstnameElem.SendKeys(r.Firstname);
+                            }
+
+                            IWebElement lastnameElem = driver.FindElement(By.CssSelector(".lastName.compoundBLRadius.compoundBRRadius.form-element__row.input"));
+                            if (lastnameElem != null)
+                            {
+                                lastnameElem.Clear();
+                                lastnameElem.SendKeys(r.Lastname);
+                            }
+
+                            //IWebElement emailElem = driver.FindElement(By.XPath("/html/body/div[3]/div[2]/div/div[2]/div/div/div/div[1]/section/div/div/div/div/div/div[2]/div[1]/div/div/div/input"));
+                            IWebElement divEmailElement = driver.FindElement(By.CssSelector("div.uiInput.uiInputEmail.uiInput--default.uiInput--input"));
+                            if (divEmailElement != null)
+                            {
+                                IWebElement labelElement = divEmailElement.FindElement(By.TagName("label"));
+                                if (labelElement != null && labelElement.Text.StartsWith("Email"))
+                                {
+                                    // Find the input field inside the div
+                                    IWebElement inputEmailElement = divEmailElement.FindElement(By.TagName("input"));
+                                    if (inputEmailElement != null)
+                                    {
+                                        inputEmailElement.Clear();
+                                        inputEmailElement.SendKeys(r.Email);
+                                    }
+                                }
+                            }
+
+                            var divCnpjElement = driver.FindElements(By.CssSelector("div.uiInput.uiInputText.uiInput--default.uiInput--input"));
+                            if (divCnpjElement != null)
+                            {
+                                var cnpjElem = divCnpjElement.Where(x => x.Text.StartsWith("CNPJ")).FirstOrDefault();
+                                IWebElement labelElement = cnpjElem.FindElement(By.TagName("label"));
+                                if (labelElement != null && labelElement.Text.StartsWith("CNPJ"))
+                                {
+                                    // Find the input field inside the div
+                                    IWebElement inputCnpjElement = cnpjElem.FindElement(By.TagName("input"));
+                                    if (inputCnpjElement != null)
+                                    {
+                                        string numbersOnly = Regex.Replace(r.Cnpj, @"[^\d]", "");
+
+                                        inputCnpjElement.Clear();
+                                        inputCnpjElement.SendKeys(numbersOnly);
+                                    }
+                                }
+                            }
+
+
+                            IWebElement divPhoneElement = driver.FindElement(By.CssSelector("div.uiInput.uiInputPhone.uiInput--default.uiInput--input"));
+                            if (divPhoneElement != null)
+                            {
+                                IWebElement labelElement = divPhoneElement.FindElement(By.TagName("label"));
+                                if (labelElement != null && (labelElement.Text.StartsWith("Telephone") || labelElement.Text.StartsWith("Telefone")))
+                                {
+                                    // Find the input field inside the div
+                                    IWebElement inputPhoneElement = divPhoneElement.FindElement(By.TagName("input"));
+                                    if (inputPhoneElement != null)
+                                    {
+                                        inputPhoneElement.Clear();
+                                        inputPhoneElement.SendKeys(r.Telefone);
+                                    }
+                                }
+                            }
+
+                            IWebElement divConfirmarElement = driver.FindElement(By.CssSelector(".slds-button.slds-button--neutral.button.uiButton--default.uiButton--brand.uiButton"));
+
+                            //IWebElement confirmarButtonn = driver.FindElement(By.XPath("//button[contains(text(),'Confirmar')]"));
+
+                            if (divConfirmarElement != null)
+                            {
+                                divConfirmarElement.Click();
+                            }
+
+                            Thread.Sleep(1000);
+
+                            // Check Errors
+                            var phoneError = driver.FindElements(By.CssSelector(".has-error.uiInputDefaultError.uiInput.uiInputPhone.uiInput--default.uiInput--input"));
+                            if (phoneError != null && phoneError.Count() > 0)
+                            {
+                                r.Errors.Add(phoneError.FirstOrDefault().Text);
+                            }
+
+                            var errorList = driver.FindElements(By.CssSelector(".errorsList"));
+                            if (errorList != null && errorList.Count() > 0)
+                            {
+                                r.Errors.Add(errorList.FirstOrDefault().Text);
+                            }
+
+                            Console.WriteLine(DateTime.Now.ToShortTimeString() + ": Processed " + r.Firstname + " " + r.Lastname + ".");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                    }
+
+                    WriteExcel(records);
+                }
+            }
+            catch (Exception ex) {
+                Console.WriteLine(ex.Message);
+                return Task.FromResult(false);
+            }
+
+            return Task.FromResult(true);
+        }
+
+        private void WriteExcel(List<Person> peopleList){
+            string base64String;
+
+            using (var wb = new XLWorkbook())
+            {
+                var datatable = ConvertToDataTable(peopleList);
+                var sheet = wb.AddWorksheet(datatable, "URA With Errors");
+
+                // Apply font color to columns 1 to 5
+                sheet.Columns(1, 5).Style.Font.FontColor = XLColor.Black;
+                wb.SaveAs(_configurationManager["DirectoryPath"] + "URA with Errors.xlsx");
+                //using (var ms = new MemoryStream())
+                //{
+                //    wb.SaveAs(ms);
+
+                //    // Convert the Excel workbook to a base64-encoded string
+                //    base64String = Convert.ToBase64String(ms.ToArray());
+                //}
+            }
+
+        }
+        public static DataTable ConvertToDataTable<T>(List<T> list)
+        {
+            DataTable dataTable = new DataTable();
+
+            try
+            {
+                // Get all public properties of type T
+                var properties = typeof(T).GetProperties();
+
+                // Create columns in DataTable based on properties of T
+                foreach (var property in properties)
+                {
+                    Type propertyType = property.PropertyType;
+
+                    // Check if property type is a list
+                    if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
+                    {
+                        // Add a string column to represent the list as a comma-separated string
+                        dataTable.Columns.Add(property.Name, typeof(string));
+                    }
+                    else
+                    {
+                        dataTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(propertyType) ?? propertyType);
+                    }
+                }
+
+                // Add rows to DataTable
+                foreach (var item in list)
+                {
+                    DataRow dataRow = dataTable.NewRow();
+                    foreach (var property in properties)
+                    {
+                        object value = property.GetValue(item);
+
+                        // Check if property is a list
+                        if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+                        {
+                            // Convert list to comma-separated string
+                            if (value is IEnumerable<object> listValue)
+                            {
+                                dataRow[property.Name] = string.Join(", ", listValue);
+                            }
+                            else
+                            {
+                                dataRow[property.Name] = DBNull.Value;
+                            }
+                        }
+                        else
+                        {
+                            dataRow[property.Name] = value ?? DBNull.Value;
+                        }
+                    }
+                    dataTable.Rows.Add(dataRow);
+                }
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine("Datatable Coversion Error: " + ex.ToString());
+            }
+            return dataTable;
+        }
+        private List<Person> ReadFile() 
+        {
+            List<Person> list = new List<Person>();
+            try
+            {
+                var filepath = _configurationManager["DirectoryPath"] + "URA Short.xlsx";
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
+                {
+                    using (var reader = ExcelReaderFactory.CreateReader(streamval))
+                    {
+                        var configuration = new ExcelDataSetConfiguration
+                        {
+                            ConfigureDataTable = _ => new ExcelDataTableConfiguration
+                            {
+                                UseHeaderRow = true
+                            }
+                        };
+                        var dataSet = reader.AsDataSet(configuration);
+
+                        if (dataSet.Tables.Count > 0)
+                        {
+                            var dataTable = dataSet.Tables[0];
+                            foreach (DataRow row in dataTable.Rows)
+                            {
+                                Person obj = new Person();
+                                obj.Telefone = row[0].ToString();
+                                var nameTokens = row[1].ToString().Split(" ");
+                                if (nameTokens.Count() > 1)
+                                {
+                                    obj.Firstname = nameTokens[0];
+                                    obj.Lastname = row[1].ToString().Substring(row[1].ToString().IndexOf(" "), row[1].ToString().Length - row[1].ToString().IndexOf(" ")).Trim();
+                                }
+                                obj.Razao = row[2].ToString();
+                                obj.Email = row[3].ToString();
+                                obj.Cnpj = row[4].ToString();
+                               
+
+                                list.Add(obj);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Sheet doesn't exist");
+                            return null;
+                        }
+
+                        //if (list.Count > 0)
+                        //{
+                        //    await _cepService.DeleteAllAsync();
+                        //    await _cepService.CreateCepsAsync(list);
+                        //}
+                        //else
+                        //{
+                        //    Console.WriteLine("No Data Found!");
+                        //    return false;
+                        //}
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+            return list;
+        }
     }
 }
