@@ -29,6 +29,7 @@ namespace ScrapperWebApp.Services
         private string url = "https://api.casadosdados.com.br/v2/public/cnpj/search";
         public async Task<List<Empresa>> GetScrappedData(Filtro filtro){
 
+            ScrapeDetailsHtml("https://casadosdados.com.br/solucao/cnpj/fergus-holding-capital-ltda-53414766000189", new Empresa());
             var data = new List<Empresa>();
 
             var requestObject = new RequestObject();
@@ -359,7 +360,7 @@ namespace ScrapperWebApp.Services
                 var telefoneElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Telefone')]");
                 if (telefoneElements != null)
                 {
-                    var childs = telefoneElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-");
+                    var childs = telefoneElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
                     foreach (var e in childs)
                     {
                         Telefone telefone = new Telefone();
