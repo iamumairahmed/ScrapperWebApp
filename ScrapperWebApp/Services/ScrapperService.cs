@@ -14,6 +14,7 @@ using ClosedXML.Excel;
 using HtmlAgilityPack;
 using ScrapperWebApp.Data;
 using System;
+using System.Xml.Linq;
 
 namespace ScrapperWebApp.Services
 {
@@ -377,7 +378,7 @@ namespace ScrapperWebApp.Services
                 var emailElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Email:')]");
                 if (emailElements != null)
                 {
-                    var childs = emailElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-");
+                    var childs = emailElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
                     if (childs.Count() > 0)
                     {
                         empresa.CdEmail = childs.FirstOrDefault().InnerText;
@@ -395,7 +396,7 @@ namespace ScrapperWebApp.Services
                 var tipoElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Tipo:')]");
                 if (tipoElements != null)
                 {
-                    var childs = tipoElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-");
+                    var childs = tipoElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
                     if (childs.Count() > 0)
                     {
                         empresa.CdTipo = childs.FirstOrDefault().InnerText;
@@ -409,12 +410,50 @@ namespace ScrapperWebApp.Services
                     Console.WriteLine("No elements found with the text 'Tipo'.");
 
 
+                // GET Natureza Jurídica:
+                var naturezaJuridicaElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Natureza Jurídica:')]");
+                if (naturezaJuridicaElements != null)
+                {
+                    var childs = naturezaJuridicaElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                    if (childs.Count() > 0)
+                    {
+                        var tokens = childs.FirstOrDefault().InnerText.Split(" - ");
+                        empresa.NoNatjur = tokens != null && tokens.Count() > 0 ? int.Parse(tokens[0]) : 0;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Either no or more than one 'Natureza Jurídica' found.");
+                    }
+                }
+                else
+                    Console.WriteLine("No elements found with the text 'Natureza Jurídica'.");
+
+
+                // GET Capital Social:
+                var capitalSocialElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Capital Social:')]");
+                if (capitalSocialElements != null)
+                {
+                    var childs = capitalSocialElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                    if (childs.Count() > 0)
+                    {
+                        var value = Regex.Replace(childs.FirstOrDefault().InnerText, @"[^\d]", "");
+                        empresa.VlCapsocial = int.Parse(value);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Either no or more than one 'Capital Social' found.");
+                    }
+                }
+                else
+                    Console.WriteLine("No elements found with the text 'Capital Social'.");
+
+
                 // GET Data da Situação
                 var dataSituacaoElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Data da Situação:')]");
                 if (dataSituacaoElements != null)
                 {
 
-                    var childs = dataSituacaoElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-");
+                    var childs = dataSituacaoElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
                     if (childs.Count() > 0)
                     {
                         string format = "dd/MM/yyyy";
@@ -440,7 +479,7 @@ namespace ScrapperWebApp.Services
                 var cnaePrincipalElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'CNAE Principal:')]");
                 if (cnaePrincipalElements != null)
                 {
-                    var childs = cnaePrincipalElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-");
+                    var childs = cnaePrincipalElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
                     if (childs.Count() > 0)
                     {
                         foreach (var e in childs)
@@ -467,7 +506,7 @@ namespace ScrapperWebApp.Services
                 var cnaeSecondaryElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'CNAEs Secundários:')]");
                 if (cnaeSecondaryElements != null)
                 {
-                    var childs = cnaeSecondaryElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-");
+                    var childs = cnaeSecondaryElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
                     if (childs.Count() > 0)
                     {
                         foreach (var e in childs)
@@ -493,7 +532,7 @@ namespace ScrapperWebApp.Services
                 var sociosElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Sócios:')]");
                 if (sociosElements != null)
                 {
-                    var childs = sociosElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-");
+                    var childs = sociosElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
                     if (childs.Count() > 0)
                     {
                         foreach (var e in childs)
