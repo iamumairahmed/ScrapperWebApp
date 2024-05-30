@@ -1,16 +1,20 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="bb-page">
-    @* <div class="sidebar">
-        <NavMenu />
-    </div> *@
+<MudThemeProvider @rendermode="InteractiveServer" />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-    <main>
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+<MudLayout class="bb-page">
+    <MudAppBar Elevation="1">
+        <MudText Typo="Typo.h5" Class="ml-3">Scrapper Web App</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+    </MudAppBar>
+   
+    <MudMainContent class="content px-4">
+        @Body
+    </MudMainContent>
+</MudLayout>
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.

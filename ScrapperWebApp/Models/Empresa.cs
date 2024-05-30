@@ -40,6 +40,8 @@ public partial class Empresa
 
     public virtual ICollection<EmpAtividade> EmpAtividades { get; set; } = new List<EmpAtividade>();
 
+    public virtual NatJur NoNatjurNavigation { get; set; }
+
     public virtual ICollection<Socio> Socios { get; set; } = new List<Socio>();
 
     public virtual ICollection<Telefone> Telefones { get; set; } = new List<Telefone>();

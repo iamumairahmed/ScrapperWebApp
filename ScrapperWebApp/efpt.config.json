@@ -35,6 +35,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Nat_Jur]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Socios]",
          "ObjectType": 0
       },

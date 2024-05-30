@@ -10,16 +10,14 @@
 @inject IImportService importService
 @inject IFiltroService filteroService
 @rendermode InteractiveServer
+@inject NavigationManager NavigationManager
 
 <PageTitle>Scrapper</PageTitle>
+<MudContainer Class="mt-16" MaxWidth="MaxWidth.ExtraLarge">
 <div class="row">
-    <div class="col-4">
-        <h2>Scrapper Web App</h2>
-    </div>
-    <div class="col-2">
-        
-    </div>
-    <div class="col-6 text-right" style="text-align: right !important">
+   
+    <div class="col-12 text-right" style="text-align: right !important">
+        <button @onclick="GoToExport" class="btn btn-sm btn-success">Export</button>
         <button @onclick="CheckRegisteredUsers" class="btn btn-sm btn-primary">Check Registered Users</button>
         <button @onclick="ImportFiltroData" class="btn btn-sm btn-warning">Import Filtro Data</button>
         <button @onclick="ImportCepData" class="btn btn-sm btn-warning">Import Cep Data</button>
@@ -49,7 +47,7 @@ else
             <button disabled="@CheckIfFiltersExists()" @onclick="GetScrappedData" class="btn btn-success">Start Scrapper</button>
         </div>
         <div class="col-6"></div>
-        <div class="col-3">
+            <div class="col-3 text-right" style="text-align: right !important">
             <button class="btn btn-danger float-end">Stop Scrapper</button>
         </div>
     </div>
@@ -144,6 +142,7 @@ else
         </tbody>
     </table>
 }
+</MudContainer>
 
 @code {
     string warninngMessage = string.Empty;
@@ -164,6 +163,10 @@ else
     protected override async Task OnInitializedAsync()
     {
         await GetFiltros();
+    }
+    void GoToExport()
+    {
+        NavigationManager.NavigateTo("Export");
     }
     protected async Task GetFiltros()
     {

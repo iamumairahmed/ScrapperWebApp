@@ -801,7 +801,7 @@ namespace ScrapperWebApp.Services
 
             using (var wb = new XLWorkbook())
             {
-                var datatable = ConvertToDataTable(peopleList);
+                var datatable = Helper.ConvertToDataTable(peopleList);
                 var sheet = wb.AddWorksheet(datatable, "URA With Errors");
 
                 // Apply font color to columns 1 to 5
@@ -817,67 +817,7 @@ namespace ScrapperWebApp.Services
             }
 
         }
-        public static DataTable ConvertToDataTable<T>(List<T> list)
-        {
-            DataTable dataTable = new DataTable();
-
-            try
-            {
-                // Get all public properties of type T
-                var properties = typeof(T).GetProperties();
-
-                // Create columns in DataTable based on properties of T
-                foreach (var property in properties)
-                {
-                    Type propertyType = property.PropertyType;
-
-                    // Check if property type is a list
-                    if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
-                    {
-                        // Add a string column to represent the list as a comma-separated string
-                        dataTable.Columns.Add(property.Name, typeof(string));
-                    }
-                    else
-                    {
-                        dataTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(propertyType) ?? propertyType);
-                    }
-                }
-
-                // Add rows to DataTable
-                foreach (var item in list)
-                {
-                    DataRow dataRow = dataTable.NewRow();
-                    foreach (var property in properties)
-                    {
-                        object value = property.GetValue(item);
-
-                        // Check if property is a list
-                        if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
-                        {
-                            // Convert list to comma-separated string
-                            if (value is IEnumerable<object> listValue)
-                            {
-                                dataRow[property.Name] = string.Join(", ", listValue);
-                            }
-                            else
-                            {
-                                dataRow[property.Name] = DBNull.Value;
-                            }
-                        }
-                        else
-                        {
-                            dataRow[property.Name] = value ?? DBNull.Value;
-                        }
-                    }
-                    dataTable.Rows.Add(dataRow);
-                }
-            }
-            catch (Exception ex) 
-            {
-                Console.WriteLine("Datatable Coversion Error: " + ex.ToString());
-            }
-            return dataTable;
-        }
+        
         private List<Person> ReadFile() 
         {
             List<Person> list = new List<Person>();

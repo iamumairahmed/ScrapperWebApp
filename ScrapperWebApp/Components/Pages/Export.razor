@@ -1,0 +1,239 @@
+﻿@page "/Export"
+@using ScrapperWebApp.Data
+@using ScrapperWebApp.Models
+@using ScrapperWebApp.Services
+@using ScrapperWebApp.Services.Interfaces
+@attribute [StreamRendering]
+@inject IAtividadeService atividadeService
+@inject ICepService cepService
+@inject IExportService exportService
+@inject INatJurService natJurService
+@rendermode InteractiveServer
+
+<PageTitle>Export</PageTitle>
+<MudOverlay Visible="!loadingCompleted" DarkBackground="true" ZIndex="9999">
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+</MudOverlay>
+<MudContainer Class="mt-16" MaxWidth="MaxWidth.ExtraLarge">
+
+<div class="row">
+    <div class="col-4">
+        <h2>Export Data</h2>
+    </div>
+</div>
+
+<hr />
+
+
+    <div class="mb-3">
+        <div class="form-row">
+            <div class="col-6">
+            <MudSelect T="int" Label="Atividades" MultiSelection="true" @bind-SelectedValues="exportDto.selectedAtividades">
+                @foreach (var elem in atividades)
+                {
+                    <MudSelectItem T="int" Value="@elem.NoAtividade">@elem.DsAtividade</MudSelectItem>
+                }
+            </MudSelect>
+                @* <InputSelect multiple placeholder="Select Atividade " class="form-control" id="atividade" @bind-Value="selectAtividades">
+                    @foreach (var elem in @atividades)
+                    {
+                        <option value="@elem.NoAtividade">@elem.DsAtividade</option>
+                    }
+                </InputSelect> *@
+            </div>
+            <div class="col-6">
+            <MudSelect T="int?" Label="Natureza Juridica" MultiSelection="true" @bind-SelectedValues="exportDto.selectedNatJurs">
+                    @foreach (var elem in natJurs)
+                    {
+                        <MudSelectItem T="int?" Value="@elem.NoNatjur">@elem.NoNatjur</MudSelectItem>
+                    }
+                </MudSelect>
+                @* <InputSelect multiple placeholder="Select Natureza Juridica " class="form-control" id="natjur" @bind-Value="selectedNatJurs">
+                    @foreach (var elem in @natJurs)
+                    {
+                        <option value="@elem.NoNatjur">@elem.NoNatjur</option>
+                    }
+                </InputSelect> *@
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mb-3">
+        <div class="form-row">
+            <div class="col-4">
+            <MudSelect T="string" Label="Situacao Cadastral" AnchorOrigin="Origin.BottomCenter" @bind-Value="exportDto.selectedSitCad">
+                    @foreach (var elem in situacaoCadastral)
+                    {
+                        <MudSelectItem Value="@elem">@elem</MudSelectItem>
+                    }
+            </MudSelect>
+                   
+            </div>
+
+            <div class="col-4">
+            <MudSelect T="string" Label="Estado (UF)" AnchorOrigin="Origin.BottomCenter" @bind-Value="exportDto.selectedEstado">
+                @foreach (var elem in situacaoCadastral)
+                {
+                    <MudSelectItem Value="@elem">@elem</MudSelectItem>
+                }
+            </MudSelect>
+                
+            </div>
+
+            <div class="col-4">
+@*               <MudNumericField @bind-Value="selectedCep" Label="CEP" Variant="Variant.Text" Min="0" Max="8" />*@
+                <MudSelect T="int" Label="Somente 8 digitos" AnchorOrigin="Origin.BottomCenter" @bind-SelectedValues="exportDto.selectedCep">
+                    @foreach (var elem in ceps)
+                    {
+                        <MudSelectItem Value="@elem.NoCep">@elem.NoCep</MudSelectItem>
+                    }
+                </MudSelect>
+@*                 <InputNumber class="form-control" placeholder="Somente 8 digitos " id="natureza-juridica" @bind-Value="@exportDto.Cep"></InputNumber>*@            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <div class="form-row">
+            <div class="col-6">
+                <label class="form-label" for="todo-item"><b>Data de Abertura - A partir de </b></label>
+                <InputDate @bind-Value="@exportDto.DateFrom" class="form-control" />
+            </div>
+
+            <div class="col-6">
+                <label class="form-label" for="todo-item"><b>Data de Abertura - Ate </b></label>
+                <InputDate @bind-Value="@exportDto.DateUntil" class="form-control" />
+            </div>
+           
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <div class="form-row">
+            <div class="col-6">
+            <MudToggleIconButton @bind-Toggled="@exportDto.somonteMEI"
+                                 Icon="@Icons.Material.Filled.ToggleOff" Color="@Color.Error" Title="Off"
+                                 ToggledIcon="@Icons.Material.Filled.ToggleOn" ToggledColor="@Color.Success" ToggledTitle="On" />
+
+            <span>Somente MEI @(somonteMEI ? "On" : "Off")</span>
+            </div>
+
+            <div class="col-6">
+            <MudToggleIconButton @bind-Toggled="@exportDto.withPhone"
+                                 Icon="@Icons.Material.Filled.ToggleOff" Color="@Color.Error" Title="Off"
+                                 ToggledIcon="@Icons.Material.Filled.ToggleOn" ToggledColor="@Color.Success" ToggledTitle="On" />
+
+            <span>Com Contato de telefone @(withPhone ? "On" : "Off")</span>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <div class="form-row">
+            <div class="col-4">
+                <MudToggleIconButton @bind-Toggled="@exportDto.withoutMEI"
+                                         Icon="@Icons.Material.Filled.ToggleOff" Color="@Color.Error" Title="Off"
+                                         ToggledIcon="@Icons.Material.Filled.ToggleOn" ToggledColor="@Color.Success" ToggledTitle="On" />
+
+                <span>Excluir MEI @(withoutMEI ? "On" : "Off")</span>
+            </div>
+
+            <div class="col-4">
+            <MudToggleIconButton @bind-Toggled="@exportDto.cellOnly"
+                                     Icon="@Icons.Material.Filled.ToggleOff" Color="@Color.Error" Title="Off"
+                                     ToggledIcon="@Icons.Material.Filled.ToggleOn" ToggledColor="@Color.Success" ToggledTitle="On" />
+
+            <span>Somente celular @(cellOnly ? "On" : "Off")</span>
+            </div>
+
+            <div class="col-4">
+                <MudToggleIconButton @bind-Toggled="@exportDto.withEmail"
+                                     Icon="@Icons.Material.Filled.ToggleOff" Color="@Color.Error" Title="Off"
+                                     ToggledIcon="@Icons.Material.Filled.ToggleOn" ToggledColor="@Color.Success" ToggledTitle="On" />
+
+                <span>Com e-mail @(withEmail ? "On" : "Off")</span>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+    <div class="mb-3">
+        <div class="form-row justify-content-center">
+            <button class="btn btn-success m-2" @onclick="Search">Pesquisar</button>
+            <button class="btn btn-warning  m-2">Registros encontrados @totalRecords</button>
+            <button class="btn btn-outline-dark  m-2" @onclick="ExportData">Gerar Arquivo</button>
+
+        </div>
+    </div>
+</MudContainer> 
+@code {
+    private int noAtividadeId { get; set; }
+
+    string sitCadId = string.Empty;
+    string[] situacaoCadastral = ["ATIVA", "BAIXADA", "INAPTA", "NULA"];
+    private IEnumerable<int> selectedAtividades { get; set; } = new HashSet<int>() { };
+    private IEnumerable<int> selectedNatJurs { get; set; } = new HashSet<int>() { };
+    private IEnumerable<int> selectedCep { get; set; } = new HashSet<int>() { };
+    private string selectedSitCad { get; set; }
+    private string selectedEstado { get; set; }
+    public bool somonteMEI { get; set; }
+    public bool withPhone { get; set; }
+    public bool withEmail { get; set; }
+    public bool withoutMEI { get; set; }
+    public bool cellOnly { get; set; }
+    public bool loadingCompleted = false;
+
+    public int totalRecords = 0;
+    public bool showTotalRecords = false;
+
+    List<Atividade> atividades = new List<Atividade>();
+    List<Cep> ceps = new List<Cep>();
+    List<NatJur> natJurs = new List<NatJur>();
+    List<int> selectAtividades = new List<int>();
+    public ExportDto exportDto { get; set; }
+    int amount1 = 10;
+
+    protected override async Task OnInitializedAsync()
+    {
+        exportDto = new ExportDto();
+        var atividadesResponse = await atividadeService.GetAtividadesAsync();
+        if (atividadesResponse.Success)
+        {
+            atividades = atividadesResponse.Output;
+        }
+
+        // var cepResponse = await cepService.GetCepsAsync();
+        // if (cepResponse.Success)
+        // {
+        //     ceps = cepResponse.Output;
+        // }
+
+        var natJurResponse = await natJurService.GetNatJurAsync();
+        if (natJurResponse.Success)
+        {
+            natJurs = natJurResponse.Output;
+        }
+
+        loadingCompleted = true;
+        StateHasChanged();
+    }
+    protected async void ExportData()
+    {
+        await exportService.ExportData(new List<Empresa>());
+    }
+    protected async void Search()
+    {
+        loadingCompleted = false;
+        showTotalRecords = false;
+        StateHasChanged();
+        var results = await exportService.SearchExportData(exportDto);
+        if (results.Success)
+        {
+            totalRecords = results.Output.Count;
+            showTotalRecords = true;
+            loadingCompleted = true;
+            StateHasChanged();
+        }
+    }
+}

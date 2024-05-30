@@ -22,6 +22,7 @@ public partial class ScrapperDbContext : DbContext
     public virtual DbSet<Empresa> Empresas { get; set; }
 
     public virtual DbSet<Filtro> Filtros { get; set; }
+    public virtual DbSet<NatJur> NatJurs { get; set; }
 
     public virtual DbSet<Socio> Socios { get; set; }
     public virtual DbSet<Telefone> Telefones { get; set; }
@@ -153,6 +154,9 @@ public partial class ScrapperDbContext : DbContext
             entity.Property(e => e.NoNatjur).HasColumnName("no_natjur");
             entity.Property(e => e.VlCapsocial).HasColumnName("vl_capsocial");
 
+            entity.HasOne(d => d.NoNatjurNavigation).WithMany(p => p.Empresas)
+                .HasForeignKey(d => d.NoNatjur)
+                .HasConstraintName("FK_Emp_Natjur");
         });
 
         modelBuilder.Entity<Filtro>(entity =>
@@ -175,6 +179,21 @@ public partial class ScrapperDbContext : DbContext
                 .HasColumnType("date")
                 .HasColumnName("dt_execucao");
             entity.Property(e => e.NoContador).HasColumnName("no_contador");
+        });
+
+        modelBuilder.Entity<NatJur>(entity =>
+        {
+            entity.HasKey(e => e.NoNatjur).HasName("PK__Nat_Jur__21708B5C8654ECDD");
+
+            entity.ToTable("Nat_Jur");
+
+            entity.Property(e => e.NoNatjur)
+                .ValueGeneratedNever()
+                .HasColumnName("no_natjur");
+            entity.Property(e => e.DsNatjur)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("ds_natjur");
         });
 
         modelBuilder.Entity<Socio>(entity =>

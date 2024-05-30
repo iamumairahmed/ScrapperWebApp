@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer.Infrastructure.Internal;
+using MudBlazor.Services;
 using ScrapperWebApp;
 using ScrapperWebApp.Components;
 using ScrapperWebApp.Data;
@@ -29,7 +30,10 @@ builder.Services.AddScoped<ICepService, CepService>();
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 builder.Services.AddScoped<IScrapperService, ScrapperService>();
 builder.Services.AddScoped<IImportService ,ImportService>();
+builder.Services.AddScoped<IExportService ,ExportService>();
+builder.Services.AddScoped<INatJurService ,NatJurService>();
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 
