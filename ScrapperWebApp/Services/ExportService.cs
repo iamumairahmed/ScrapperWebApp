@@ -66,9 +66,10 @@ namespace ScrapperWebApp.Services
             {
                 query = query.Where(e => e.CdSituacao == parameters.selectedSitCad);
             }
-            if (parameters.selectedEstado != null && !string.IsNullOrEmpty(parameters.selectedEstado))
+            if (parameters.selectedEstado != null && parameters.selectedEstado.Any())
             {
-                //query = query.Where(e => e. == parameters.Estado.Value);
+                var queryEstados = ctx.Ceps.Where(x => parameters.selectedEstado.Contains(x.CdEstado)).Select(x => x.NoCep).ToList();
+                query = query.Where(e => queryEstados.Contains((e.NoCep)));
             }
             if (parameters.selectedCep != null && parameters.selectedCep.Any())
             {
@@ -103,7 +104,7 @@ namespace ScrapperWebApp.Services
                 query = query.Where(e => !string.IsNullOrEmpty(e.CdEmail));
             }
 
-            var results = await query.ToListAsync();
+            var results = await query.Include(x => x.Telefones).ToListAsync();
             return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, results);
         }
     }

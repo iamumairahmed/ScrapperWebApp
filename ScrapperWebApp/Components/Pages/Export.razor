@@ -49,12 +49,6 @@
                         <MudSelectItem T="int?" Value="@elem.NoNatjur">@GenerateNatJurLabel(elem.NoNatjur)</MudSelectItem>
                     }
                 </MudSelect>
-                @* <InputSelect multiple placeholder="Select Natureza Juridica " class="form-control" id="natjur" @bind-Value="selectedNatJurs">
-                    @foreach (var elem in @natJurs)
-                    {
-                        <option value="@elem.NoNatjur">@elem.NoNatjur</option>
-                    }
-                </InputSelect> *@
             </div>
         </div>
 
@@ -73,10 +67,10 @@
             </div>
 
             <div class="col-6">
-                <MudSelect T="string" Clearable="true" MultiSelection="true" Label="Estado (UF)" AnchorOrigin="Origin.BottomCenter" @bind-Value="exportDto.selectedEstado">
-                @foreach (var elem in estados)
+                <MudSelect Clearable="true" MultiSelection="true" Label="Estado (UF)" @bind-SelectedValues="exportDto.selectedEstado" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter">
+                @foreach (var est in estados)
                 {
-                    <MudSelectItem Value="@elem">@elem</MudSelectItem>
+                    <MudSelectItem Value="@est">@est</MudSelectItem>
                 }
             </MudSelect>
                 
@@ -198,7 +192,7 @@
     public bool loadingCompleted = false;
     public List<string> selectedCeps = new List<string>();
 
-    public List<string> estados = new List<string>();
+    public List<string> estados { get; set; } = new List<string>();
     public int totalRecords = 0;
     public bool showTotalRecords = false;
     public string cep = "";
