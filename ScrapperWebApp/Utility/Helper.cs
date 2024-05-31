@@ -84,10 +84,17 @@ namespace ScrapperWebApp.Utility
                     {
                         if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
                         {
-                            // If the property is a list, we need to add multiple columns for each item
-                            for (int i = 1; i <= maxPhoneCount; i++)
+                            if (maxPhoneCount == 0)
                             {
-                                table.Columns.Add($"{prop.Name}{i}", typeof(string));
+                                table.Columns.Add($"{prop.Name}1", typeof(string));
+                            }
+                            else
+                            {
+                                // If the property is a list, we need to add multiple columns for each item
+                                for (int i = 1; i <= maxPhoneCount; i++)
+                                {
+                                    table.Columns.Add($"{prop.Name}{i}", typeof(string));
+                                }
                             }
                         }
                         else

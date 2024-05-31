@@ -18,7 +18,7 @@
 
         public IEnumerable<int> selectedAtividades { get; set; } = new HashSet<int>() { };
         public IEnumerable<int?> selectedNatJurs { get; set; } = new HashSet<int?>() { };
-        public IEnumerable<int> selectedCep { get; set; } = new HashSet<int>() { };
+        public List<string> selectedCep { get; set; } = new List<string>();
         public string selectedSitCad { get; set; }
         public string selectedEstado { get; set; }
         public bool somonteMEI { get; set; }

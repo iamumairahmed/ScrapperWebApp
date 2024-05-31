@@ -9,6 +9,7 @@
 @inject IExportService exportService
 @inject INatJurService natJurService
 @rendermode InteractiveServer
+@inject ISnackbar Snackbar
 
 <PageTitle>Export</PageTitle>
 <MudOverlay Visible="!loadingCompleted" DarkBackground="true" ZIndex="9999">
@@ -28,12 +29,12 @@
     <div class="mb-3">
         <div class="form-row">
             <div class="col-6">
-            <MudSelect T="int" Label="Atividades" MultiSelection="true" @bind-SelectedValues="exportDto.selectedAtividades">
+                <MudSelect Label="Atividades" Clearable="true" MultiSelection="true" @bind-SelectedValues="exportDto.selectedAtividades" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter" ToStringFunc="ToStringConverter">
                 @foreach (var elem in atividades)
                 {
-                    <MudSelectItem T="int" Value="@elem.NoAtividade">@elem.DsAtividade</MudSelectItem>
+                    <MudSelectItem Value="@elem.NoAtividade">@GenerateAtividadeLabel(elem.NoAtividade)</MudSelectItem>
                 }
-            </MudSelect>
+                </MudSelect>
                 @* <InputSelect multiple placeholder="Select Atividade " class="form-control" id="atividade" @bind-Value="selectAtividades">
                     @foreach (var elem in @atividades)
                     {
@@ -42,10 +43,10 @@
                 </InputSelect> *@
             </div>
             <div class="col-6">
-            <MudSelect T="int?" Label="Natureza Juridica" MultiSelection="true" @bind-SelectedValues="exportDto.selectedNatJurs">
+                <MudSelect Label="Natureza Juridica" Clearable="true" MultiSelection="true"  @bind-SelectedValues="exportDto.selectedNatJurs" AdornmentIcon="@Icons.Material.Filled.Search" AnchorOrigin="Origin.BottomCenter" ToStringFunc="ToStringConverterNatJur">
                     @foreach (var elem in natJurs)
                     {
-                        <MudSelectItem T="int?" Value="@elem.NoNatjur">@elem.NoNatjur</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@elem.NoNatjur">@GenerateNatJurLabel(elem.NoNatjur)</MudSelectItem>
                     }
                 </MudSelect>
                 @* <InputSelect multiple placeholder="Select Natureza Juridica " class="form-control" id="natjur" @bind-Value="selectedNatJurs">
@@ -61,7 +62,7 @@
 
     <div class="mb-3">
         <div class="form-row">
-            <div class="col-4">
+            <div class="col-6">
             <MudSelect T="string" Label="Situacao Cadastral" AnchorOrigin="Origin.BottomCenter" @bind-Value="exportDto.selectedSitCad">
                     @foreach (var elem in situacaoCadastral)
                     {
@@ -71,25 +72,34 @@
                    
             </div>
 
-            <div class="col-4">
-            <MudSelect T="string" Label="Estado (UF)" AnchorOrigin="Origin.BottomCenter" @bind-Value="exportDto.selectedEstado">
-                @foreach (var elem in situacaoCadastral)
+            <div class="col-6">
+                <MudSelect T="string" Clearable="true" MultiSelection="true" Label="Estado (UF)" AnchorOrigin="Origin.BottomCenter" @bind-Value="exportDto.selectedEstado">
+                @foreach (var elem in estados)
                 {
                     <MudSelectItem Value="@elem">@elem</MudSelectItem>
                 }
             </MudSelect>
                 
             </div>
+        </div>
+    </div>
+    <div class="mb-3">
+        <div class="form-row">
+            <div class="col-6">
+                <MudAutocomplete FullWidth="true" MaxLength="8" MinCharacters=8 T="string" Label="Ceps" SearchFunc="@SearchCep" ValueChanged="@UpdateSelectedCep" />
 
-            <div class="col-4">
-@*               <MudNumericField @bind-Value="selectedCep" Label="CEP" Variant="Variant.Text" Min="0" Max="8" />*@
-                <MudSelect T="int" Label="Somente 8 digitos" AnchorOrigin="Origin.BottomCenter" @bind-SelectedValues="exportDto.selectedCep">
-                    @foreach (var elem in ceps)
+                <MudAlert Severity="Severity.Warning" NoIcon="true" Class="my-2">Add 8 digit CEP to search from database</MudAlert>
+
+            </div>
+            <div class="col-6">
+                <MudText Typo="Typo.subtitle1">Selected CEPs</MudText>
+                <MudChipSet AllClosable="true" OnClose="Closed">
+                    @foreach (var value in exportDto.selectedCep)
                     {
-                        <MudSelectItem Value="@elem.NoCep">@elem.NoCep</MudSelectItem>
+                        <MudChip Text="@value" Color="Color.Primary"></MudChip>
                     }
-                </MudSelect>
-@*                 <InputNumber class="form-control" placeholder="Somente 8 digitos " id="natureza-juridica" @bind-Value="@exportDto.Cep"></InputNumber>*@            </div>
+                </MudChipSet>
+            </div>
         </div>
     </div>
 
@@ -162,40 +172,52 @@
         <div class="form-row justify-content-center">
             <button class="btn btn-success m-2" @onclick="Search">Pesquisar</button>
             <button class="btn btn-warning  m-2">Registros encontrados @totalRecords</button>
-            <button class="btn btn-outline-dark  m-2" @onclick="ExportData">Gerar Arquivo</button>
+            <button class="btn btn-outline-dark m-2" disabled="@IsDisabled" @onclick="ExportData">Gerar Arquivo</button>
 
         </div>
+        <MudAlert Severity="Severity.Warning" hidden="@hideError">@errorMsg</MudAlert>
+        @if (showExportAlert)
+        {
+            <MudAlert Severity="Severity.Success" ContentAlignment="HorizontalAlignment.Center" ShowCloseIcon="true" CloseIconClicked="(() => CloseExportAlert(false))">File Exported Successfully!</MudAlert>
+        }
     </div>
 </MudContainer> 
 @code {
-    private int noAtividadeId { get; set; }
+    protected Func<int, string> ToStringConverter;
+    protected Func<int?, string> ToStringConverterNatJur;
 
+    private int noAtividadeId { get; set; }
+    bool showExportAlert = false;
     string sitCadId = string.Empty;
     string[] situacaoCadastral = ["ATIVA", "BAIXADA", "INAPTA", "NULA"];
-    private IEnumerable<int> selectedAtividades { get; set; } = new HashSet<int>() { };
-    private IEnumerable<int> selectedNatJurs { get; set; } = new HashSet<int>() { };
-    private IEnumerable<int> selectedCep { get; set; } = new HashSet<int>() { };
-    private string selectedSitCad { get; set; }
-    private string selectedEstado { get; set; }
     public bool somonteMEI { get; set; }
     public bool withPhone { get; set; }
     public bool withEmail { get; set; }
     public bool withoutMEI { get; set; }
     public bool cellOnly { get; set; }
     public bool loadingCompleted = false;
+    public List<string> selectedCeps = new List<string>();
 
+    public List<string> estados = new List<string>();
     public int totalRecords = 0;
     public bool showTotalRecords = false;
-
+    public string cep = "";
+    List<Empresa> searchResults = new List<Empresa>();
     List<Atividade> atividades = new List<Atividade>();
     List<Cep> ceps = new List<Cep>();
     List<NatJur> natJurs = new List<NatJur>();
     List<int> selectAtividades = new List<int>();
     public ExportDto exportDto { get; set; }
     int amount1 = 10;
+    string errorMsg = string.Empty;
+    bool IsDisabled = true;
+    bool hideError = true;
 
     protected override async Task OnInitializedAsync()
     {
+        ToStringConverter = GenerateAtividadeLabel;
+        ToStringConverterNatJur = GenerateNatJurLabel;
+
         exportDto = new ExportDto();
         var atividadesResponse = await atividadeService.GetAtividadesAsync();
         if (atividadesResponse.Success)
@@ -203,24 +225,45 @@
             atividades = atividadesResponse.Output;
         }
 
-        // var cepResponse = await cepService.GetCepsAsync();
-        // if (cepResponse.Success)
-        // {
-        //     ceps = cepResponse.Output;
-        // }
-
         var natJurResponse = await natJurService.GetNatJurAsync();
         if (natJurResponse.Success)
         {
             natJurs = natJurResponse.Output;
         }
 
+        var estadosEsponse = await cepService.GetEstadoAsync();
+        if (estadosEsponse.Success)
+        {
+            estados = estadosEsponse.Output;
+
+        }
+
         loadingCompleted = true;
         StateHasChanged();
     }
+
+    public void Closed(MudChip chip) => exportDto.selectedCep.Remove(chip.Text);
+    private void CloseExportAlert(bool value)
+    {
+        showExportAlert = false;
+    }
     protected async void ExportData()
     {
-        await exportService.ExportData(new List<Empresa>());
+        loadingCompleted = false;
+        StateHasChanged();
+        if (searchResults != null && searchResults.Count() > 0)
+        {
+            Task.Delay(10000);
+            await exportService.ExportData(searchResults);
+        }
+        else
+        {
+            errorMsg = "Please search records first";
+            hideError = false;
+        }
+        showExportAlert = true;
+        loadingCompleted = true;
+        StateHasChanged();
     }
     protected async void Search()
     {
@@ -231,9 +274,47 @@
         if (results.Success)
         {
             totalRecords = results.Output.Count;
+            searchResults = results.Output;
+            IsDisabled = false;
             showTotalRecords = true;
             loadingCompleted = true;
             StateHasChanged();
+        }
+    }
+
+    private string GenerateAtividadeLabel(int elem)
+    {
+        var result = atividades.FirstOrDefault(u => u.NoAtividade == elem);
+        return $"{result.NoAtividade} - {result.DsAtividade}";
+    }
+    private string GenerateNatJurLabel(int? elem)
+    {
+        var result = natJurs.FirstOrDefault(u => u.NoNatjur == elem);
+        return $"{result.NoNatjur} - {result.DsNatjur}";
+    }
+   
+    private async Task<IEnumerable<string>> SearchCep(string value)
+    {
+        // if text is null or empty, show complete list
+        if (string.IsNullOrEmpty(value))
+            return null;
+
+        var cepResponse = await cepService.GetSingleCepAsync(value);
+        if (cepResponse.Success)
+        {
+            ceps = cepResponse.Output;
+
+        }
+
+        return ceps.Select(x => x.NoCep);
+
+        //return states.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+    protected void UpdateSelectedCep(string value)
+    {
+        if (!exportDto.selectedCep.Contains(value))
+        {
+            exportDto.selectedCep.Add(value);
         }
     }
 }

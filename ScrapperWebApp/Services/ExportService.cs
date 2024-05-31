@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Office2013.Word;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.EntityFrameworkCore;
@@ -24,22 +25,27 @@ namespace ScrapperWebApp.Services
         public Task<bool> ExportData(List<Empresa> empresas)
         {
             string base64String;
-            var ctx = _context.CreateDbContext();
-
-            //empresas = ctx.Empresas.Take(5).ToList();
-            using (var wb = new XLWorkbook())
+            try
             {
-                int maxPhoneCount = empresas.Max(p => p.Telefones.Count);
+                var ctx = _context.CreateDbContext();
+                using (var wb = new XLWorkbook())
+                {
+                    int maxPhoneCount = empresas.Max(p => p.Telefones.Count);
 
-                var datatable = Helper.ConvertToDataTableExport(empresas, maxPhoneCount);
-                var sheet = wb.AddWorksheet(datatable, "Export"+DateTime.Now.ToString("ddMMyyyhhmmss"));
+                    var datatable = Helper.ConvertToDataTableExport(empresas, maxPhoneCount);
+                    var sheet = wb.AddWorksheet(datatable, "Export" + DateTime.Now.ToString("ddMMyyyhhmmss"));
 
-                // Apply font color to columns 1 to 5
-                sheet.Columns(1, 5).Style.Font.FontColor = XLColor.Black;
-                wb.SaveAs(_configurationManager["DirectoryPath"] + "Export" + DateTime.Now.ToString("ddMMyyyhhmmss") + ".xlsx");
-                
+                    // Apply font color to columns 1 to 5
+                    sheet.Columns(1, 5).Style.Font.FontColor = XLColor.Black;
+                    wb.SaveAs(_configurationManager["DirectoryPath"] + "Export" + DateTime.Now.ToString("ddMMyyyhhmmss") + ".xlsx");
+
+                }
+            }catch(Exception ex) 
+            {
+                Console.WriteLine(ex.ToString());
+                return Task.FromResult(false);
             }
-            throw new NotImplementedException();
+            return Task.FromResult(true);
         }
 
         public async Task<ResponseModel> SearchExportData(ExportDto parameters)
@@ -66,7 +72,7 @@ namespace ScrapperWebApp.Services
             }
             if (parameters.selectedCep != null && parameters.selectedCep.Any())
             {
-                query = query.Where(e => parameters.selectedCep.Contains(int.Parse(e.NoCep)));
+                query = query.Where(e => parameters.selectedCep.Contains((e.NoCep)));
             }
             if (parameters.DateFrom.HasValue)
             {
