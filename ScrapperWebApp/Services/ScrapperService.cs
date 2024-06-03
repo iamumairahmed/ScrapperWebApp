@@ -30,7 +30,7 @@ namespace ScrapperWebApp.Services
         private string url = "https://api.casadosdados.com.br/v2/public/cnpj/search";
         public async Task<List<Empresa>> GetScrappedData(Filtro filtro){
 
-            ScrapeDetailsHtml("https://casadosdados.com.br/solucao/cnpj/fergus-holding-capital-ltda-53414766000189", new Empresa());
+            //ScrapeDetailsHtml("https://casadosdados.com.br/solucao/cnpj/fergus-holding-capital-ltda-53414766000189", new Empresa());
             var data = new List<Empresa>();
 
             var requestObject = new RequestObject();
@@ -84,30 +84,31 @@ namespace ScrapperWebApp.Services
 
                         foreach (var item in responseObject.data.cnpj)
                         {
-                            Empresa empresa = new Empresa();
-                            empresa.NoCnpj = long.Parse(item.cnpj);
-                            empresa.CdRzsocial = item.razao_social;
-                            empresa.CdFantasia = item.nome_fantasia;
-                            //empresa.CdTipo = ;
-                            empresa.DtAbertura = item.data_abertura;
-                            empresa.CdSituacao = item.situacao_cadastral;
-                            //empresa.DtSituacao = ;
-                            //empresa.VlCapsocial = ;
-                            //empresa.NoNatjur = ;
-                            empresa.CdLogra = item.logradouro;
-                            empresa.CdNumero = item.numero;
-                            empresa.NoCep = filtro.NoCep;
-                            //empresa.NoFone = ;
-                            //empresa.CdEmail = ;
-                            empresa.CdMei = item.cnpj_mei ? "Yes" : "No";
+                            {
+                                Empresa empresa = new Empresa();
+                                empresa.NoCnpj = long.Parse(item.cnpj);
+                                empresa.CdRzsocial = item.razao_social;
+                                empresa.CdFantasia = item.nome_fantasia;
+                                //empresa.CdTipo = ;
+                                empresa.DtAbertura = item.data_abertura;
+                                empresa.CdSituacao = item.situacao_cadastral;
+                                //empresa.DtSituacao = ;
+                                //empresa.VlCapsocial = ;
+                                //empresa.NoNatjur = ;
+                                empresa.CdLogra = item.logradouro;
+                                empresa.CdNumero = item.numero;
+                                empresa.NoCep = filtro.NoCep;
+                                //empresa.NoFone = ;
+                                //empresa.CdEmail = ;
+                                empresa.CdMei = item.cnpj_mei ? "Yes" : "No";
 
-                            string removedDots = item.razao_social.Replace(".", "");
-                            string filtered = removedDots.Replace(" ", "-");
-                            var details_url = "https://casadosdados.com.br/solucao/cnpj/" + filtered + "-" + item.cnpj;
+                                string removedDots = item.razao_social.Replace(".", "");
+                                string filtered = removedDots.Replace(" ", "-");
+                                var details_url = "https://casadosdados.com.br/solucao/cnpj/" + filtered + "-" + item.cnpj;
 
-                            var updatedEmpresa = await ScrapeDetailsHtml(details_url, empresa);
-                            data.Add(updatedEmpresa);
-
+                                var updatedEmpresa = await ScrapeDetailsHtml(details_url, empresa, filtro);
+                                data.Add(updatedEmpresa);
+                            }
                         }
                     }
                 }
@@ -337,7 +338,7 @@ namespace ScrapperWebApp.Services
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
-        private async Task<Empresa> ScrapeDetailsHtml(string url, Empresa empresa) 
+        private async Task<Empresa> ScrapeDetailsHtml(string url, Empresa empresa, Filtro filtro) 
         {
             try
             {
@@ -356,204 +357,216 @@ namespace ScrapperWebApp.Services
                 HtmlDocument document = new HtmlDocument();
                 document.LoadHtml(res);
 
+                var empreMEI = document.DocumentNode.SelectNodes("//*[contains(text(), 'Empresa MEI:')]");
 
-                // GET TELEFONE
-                var telefoneElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Telefone')]");
-                if (telefoneElements != null)
+                if (empreMEI != null && empreMEI.Count() > 0)
                 {
-                    var childs = telefoneElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    foreach (var e in childs)
+                    var meiElements = empreMEI[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                    if (meiElements != null && meiElements.Count() > 0)
                     {
-                        Telefone telefone = new Telefone();
-                        telefone.NoFone = e.InnerText;
-                        telefone.NoCnpj = empresa.NoCnpj;
-                        empresa.Telefones.Add(telefone);
-                    }
-                }
-                else
-                    Console.WriteLine("No elements found with the text 'Telefone:'.");
-
-
-                // GET EMAIL
-                var emailElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Email:')]");
-                if (emailElements != null)
-                {
-                    var childs = emailElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    if (childs.Count() > 0)
-                    {
-                        empresa.CdEmail = childs.FirstOrDefault().InnerText;
-                    }
-                    else 
-                    {
-                        Console.WriteLine("Either no or more than one 'Email' found.");
-                    }
-                }
-                else
-                    Console.WriteLine("No elements found with the text 'Email:'.");
-                
-                
-                // GET TIPO
-                var tipoElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Tipo:')]");
-                if (tipoElements != null)
-                {
-                    var childs = tipoElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    if (childs.Count() > 0)
-                    {
-                        empresa.CdTipo = childs.FirstOrDefault().InnerText;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Either no or more than one 'Tipo' found.");
-                    }
-                }
-                else
-                    Console.WriteLine("No elements found with the text 'Tipo'.");
-
-
-                // GET Natureza Jurídica:
-                var naturezaJuridicaElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Natureza Jurídica:')]");
-                if (naturezaJuridicaElements != null)
-                {
-                    var childs = naturezaJuridicaElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    if (childs.Count() > 0)
-                    {
-                        var tokens = childs.FirstOrDefault().InnerText.Split(" - ");
-                        empresa.NoNatjur = tokens != null && tokens.Count() > 0 ? int.Parse(tokens[0]) : 0;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Either no or more than one 'Natureza Jurídica' found.");
-                    }
-                }
-                else
-                    Console.WriteLine("No elements found with the text 'Natureza Jurídica'.");
-
-
-                // GET Capital Social:
-                var capitalSocialElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Capital Social:')]");
-                if (capitalSocialElements != null)
-                {
-                    var childs = capitalSocialElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    if (childs.Count() > 0)
-                    {
-                        var value = Regex.Replace(childs.FirstOrDefault().InnerText, @"[^\d]", "");
-                        empresa.VlCapsocial = int.Parse(value);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Either no or more than one 'Capital Social' found.");
-                    }
-                }
-                else
-                    Console.WriteLine("No elements found with the text 'Capital Social'.");
-
-
-                // GET Data da Situação
-                var dataSituacaoElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Data da Situação:')]");
-                if (dataSituacaoElements != null)
-                {
-
-                    var childs = dataSituacaoElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    if (childs.Count() > 0)
-                    {
-                        string format = "dd/MM/yyyy";
-                        if (DateTime.TryParseExact(childs.FirstOrDefault().InnerText, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result))
+                        var empresaMei = meiElements.FirstOrDefault().InnerText;
+                        if ((filtro.CdMei != null && ((filtro.CdMei == "Sim" && empresaMei == "Sim") || (filtro.CdMei == "Não" && empresaMei == "Não"))) || filtro.CdMei == null)
                         {
-                            empresa.DtSituacao = DateTime.Parse(result.ToString("yyyy-MM-dd"));
+                            // GET TELEFONE
+                            var telefoneElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Telefone')]");
+                            if (telefoneElements != null)
+                            {
+                                var childs = telefoneElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                foreach (var e in childs)
+                                {
+                                    Telefone telefone = new Telefone();
+                                    telefone.NoFone = e.InnerText;
+                                    telefone.NoCnpj = empresa.NoCnpj;
+                                    empresa.Telefones.Add(telefone);
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'Telefone:'.");
+
+
+                            // GET EMAIL
+                            var emailElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Email:')]");
+                            if (emailElements != null)
+                            {
+                                var childs = emailElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                if (childs.Count() > 0)
+                                {
+                                    empresa.CdEmail = childs.FirstOrDefault().InnerText;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Either no or more than one 'Email' found.");
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'Email:'.");
+
+
+                            // GET TIPO
+                            var tipoElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Tipo:')]");
+                            if (tipoElements != null)
+                            {
+                                var childs = tipoElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                if (childs.Count() > 0)
+                                {
+                                    empresa.CdTipo = childs.FirstOrDefault().InnerText;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Either no or more than one 'Tipo' found.");
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'Tipo'.");
+
+
+                            // GET Natureza Jurídica:
+                            var naturezaJuridicaElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Natureza Jurídica:')]");
+                            if (naturezaJuridicaElements != null)
+                            {
+                                var childs = naturezaJuridicaElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                if (childs.Count() > 0)
+                                {
+                                    var tokens = childs.FirstOrDefault().InnerText.Split(" - ");
+                                    empresa.NoNatjur = tokens != null && tokens.Count() > 0 ? int.Parse(tokens[0]) : 0;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Either no or more than one 'Natureza Jurídica' found.");
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'Natureza Jurídica'.");
+
+
+                            // GET Capital Social:
+                            var capitalSocialElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Capital Social:')]");
+                            if (capitalSocialElements != null)
+                            {
+                                var childs = capitalSocialElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                if (childs.Count() > 0)
+                                {
+                                    var value = Regex.Replace(childs.FirstOrDefault().InnerText, @"[^\d]", "");
+                                    empresa.VlCapsocial = int.Parse(value);
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Either no or more than one 'Capital Social' found.");
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'Capital Social'.");
+
+
+                            // GET Data da Situação
+                            var dataSituacaoElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Data da Situação:')]");
+                            if (dataSituacaoElements != null)
+                            {
+
+                                var childs = dataSituacaoElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                if (childs.Count() > 0)
+                                {
+                                    string format = "dd/MM/yyyy";
+                                    if (DateTime.TryParseExact(childs.FirstOrDefault().InnerText, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result))
+                                    {
+                                        empresa.DtSituacao = DateTime.Parse(result.ToString("yyyy-MM-dd"));
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Failed to parse Data da Situação date string.");
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Either no or more than one 'Data da Situação' found.");
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'Data da Situação:'.");
+
+
+                            // GET CNAE Principal
+                            var cnaePrincipalElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'CNAE Principal:')]");
+                            if (cnaePrincipalElements != null)
+                            {
+                                var childs = cnaePrincipalElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                if (childs.Count() > 0)
+                                {
+                                    foreach (var e in childs)
+                                    {
+                                        var tokens = e.InnerText.Split(" - ");
+                                        var no_atividade = tokens[0];
+                                        EmpAtividade empAtividade = new EmpAtividade();
+                                        empAtividade.NoAtividade = int.Parse(no_atividade);
+                                        empAtividade.NoCnpj = empresa.NoCnpj;
+                                        empAtividade.CdAtvPrincipal = "Yes";
+                                        empresa.EmpAtividades.Add(empAtividade);
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Either no or more than one 'CNAE Principal' found.");
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'CNAE Principal'.");
+
+
+                            // GET CNAE Secondary
+                            var cnaeSecondaryElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'CNAEs Secundários:')]");
+                            if (cnaeSecondaryElements != null)
+                            {
+                                var childs = cnaeSecondaryElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                if (childs.Count() > 0)
+                                {
+                                    foreach (var e in childs)
+                                    {
+                                        var tokens = e.InnerText.Split(" - ");
+                                        var no_atividade = tokens[0];
+                                        EmpAtividade empAtividade = new EmpAtividade();
+                                        empAtividade.NoAtividade = int.Parse(no_atividade);
+                                        empAtividade.NoCnpj = empresa.NoCnpj;
+                                        empresa.EmpAtividades.Add(empAtividade);
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Either no or more than one 'CNAE Secundários' found.");
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'CNAE Secundários'.");
+
+
+                            // GET CNAE Secondary
+                            var sociosElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Sócios:')]");
+                            if (sociosElements != null)
+                            {
+                                var childs = sociosElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
+                                if (childs.Count() > 0)
+                                {
+                                    foreach (var e in childs)
+                                    {
+                                        var tokens = e.InnerText.Split(" - ");
+                                        var ds_socio = tokens[0];
+                                        var ds_tp_socio = tokens.Length > 0 ? tokens[1] : null;
+                                        Socio socio = new Socio();
+                                        socio.DsSocio = ds_socio;
+                                        socio.DsTpSocio = ds_tp_socio;
+                                        socio.NoCnpj = empresa.NoCnpj;
+                                        empresa.Socios.Add(socio);
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Either no or more than one 'Sócios' found.");
+                                }
+                            }
+                            else
+                                Console.WriteLine("No elements found with the text 'Sócios'.");
                         }
-                        else
-                        {
-                            Console.WriteLine("Failed to parse Data da Situação date string.");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Either no or more than one 'Data da Situação' found.");
                     }
                 }
-                else
-                    Console.WriteLine("No elements found with the text 'Data da Situação:'.");
-
-
-                // GET CNAE Principal
-                var cnaePrincipalElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'CNAE Principal:')]");
-                if (cnaePrincipalElements != null)
-                {
-                    var childs = cnaePrincipalElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    if (childs.Count() > 0)
-                    {
-                        foreach (var e in childs)
-                        {
-                            var tokens = e.InnerText.Split(" - ");
-                            var no_atividade = tokens[0];
-                            EmpAtividade empAtividade = new EmpAtividade();
-                            empAtividade.NoAtividade = int.Parse(no_atividade);
-                            empAtividade.NoCnpj = empresa.NoCnpj;
-                            empAtividade.CdAtvPrincipal = "Yes";
-                            empresa.EmpAtividades.Add(empAtividade);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Either no or more than one 'CNAE Principal' found.");
-                    }
-                }
-                else
-                    Console.WriteLine("No elements found with the text 'CNAE Principal'.");
-
-
-                // GET CNAE Secondary
-                var cnaeSecondaryElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'CNAEs Secundários:')]");
-                if (cnaeSecondaryElements != null)
-                {
-                    var childs = cnaeSecondaryElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    if (childs.Count() > 0)
-                    {
-                        foreach (var e in childs)
-                        {
-                            var tokens = e.InnerText.Split(" - ");
-                            var no_atividade = tokens[0];
-                            EmpAtividade empAtividade = new EmpAtividade();
-                            empAtividade.NoAtividade = int.Parse(no_atividade);
-                            empAtividade.NoCnpj = empresa.NoCnpj;
-                            empresa.EmpAtividades.Add(empAtividade);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Either no or more than one 'CNAE Secundários' found.");
-                    }
-                }
-                else
-                    Console.WriteLine("No elements found with the text 'CNAE Secundários'.");
-
-
-                // GET CNAE Secondary
-                var sociosElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Sócios:')]");
-                if (sociosElements != null)
-                {
-                    var childs = sociosElements[0].ParentNode.ChildNodes.Where(x => x.Name == "p" && x.InnerText != "-" && x.InnerText != " ");
-                    if (childs.Count() > 0)
-                    {
-                        foreach (var e in childs)
-                        {
-                            var tokens = e.InnerText.Split(" - ");
-                            var ds_socio = tokens[0];
-                            var ds_tp_socio = tokens.Length > 0 ? tokens[1] : null;
-                            Socio socio = new Socio();
-                            socio.DsSocio = ds_socio;
-                            socio.DsTpSocio = ds_tp_socio;
-                            socio.NoCnpj = empresa.NoCnpj;
-                            empresa.Socios.Add(socio);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Either no or more than one 'Sócios' found.");
-                    }
-                }
-                else
-                    Console.WriteLine("No elements found with the text 'Sócios'.");
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); return null; }
             return empresa;

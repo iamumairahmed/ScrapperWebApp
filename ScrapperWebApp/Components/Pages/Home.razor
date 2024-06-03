@@ -13,6 +13,9 @@
 @inject NavigationManager NavigationManager
 
 <PageTitle>Scrapper</PageTitle>
+<MudOverlay Visible="showLoader" DarkBackground="true" ZIndex="9999">
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+</MudOverlay>
 <MudContainer Class="mt-16" MaxWidth="MaxWidth.ExtraLarge">
 <div class="row">
    
@@ -22,15 +25,26 @@
         <button @onclick="ImportFiltroData" class="btn btn-sm btn-warning">Import Filtro Data</button>
         <button @onclick="ImportCepData" class="btn btn-sm btn-warning">Import Cep Data</button>
         <button @onclick="ImportAtivdadeData" class="btn btn-sm btn-warning">Import Atividade Data</button>
-        @if (!cepSeederCompleted || !atividadeSeederCompleted || !filtroSeederCompleted)
-        {
-            <p class="m-0 text-danger"><em>An error occurred, maybe file not found. Please check file path</em></p>
-        }
-        <p class="m-0"><em>Supports xlsx, xlsm format files (table will cleared before import)</em></p>
-        @if (showAlertMessage)
-        {
-            <p class="m-0 text-success"><em>@alertText</em></p>
-        }
+        
+    </div>
+       
+</div>
+<div class="row">
+    <div class="col-4"></div>
+    <div class="col-4"></div>
+    <div class="col-4 text-right" style="text-align: right !important">
+        <div class="mt-2">
+            @if (!cepSeederCompleted || !atividadeSeederCompleted || !filtroSeederCompleted)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">An error occurred, maybe file not found. Please check file path</MudAlert>
+            }
+            <MudAlert Class="d-flex justify-end" Dense="true" Severity="Severity.Warning" Variant="Variant.Outlined">Supports xlsx, xlsm format files (table will cleared before import)</MudAlert>
+            @if (showAlertMessage)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">@alertText</MudAlert>
+            }
+        </div>
+        
     </div>
 </div>
 
@@ -80,6 +94,7 @@ else
                 <th>CEP</th>
                 <th>Data de Abertura - A partir de</th>
                 <th>Data de Abertura - Ate</th>
+                <th>Cd Mei</th>
                 <th>Total de Registros</th>
                 <th>Registros Salvos</th>
             </tr>
@@ -90,6 +105,19 @@ else
             <tr>
                 <td>@currentFilter.NoCep</td>
                 <td>@currentFilter.DtInicial</td>
+                        <td>
+                            @if (@currentFilter.CdMei == "Sim"){
+                                <MudChip Color="Color.Success">@currentFilter.CdMei</MudChip>
+                            }
+                            else if (@currentFilter.CdMei == "Não")
+                            {
+                                <MudChip Color="Color.Error">@currentFilter.CdMei</MudChip>
+                            }
+                            else
+                            {
+                                @currentFilter.CdMei
+                            }
+                        </td>
                 <td>@currentFilter.DtFinal</td>
                 <td>@currentFilter.NoContador</td>
                 <td>0</td>
@@ -113,6 +141,7 @@ else
                 <th>CEP</th>
                 <th>Data de Abertura - A partir de</th>
                 <th>Data de Abertura - Ate</th>
+                <th>Cd Mei</th>
                 <th>Total de Registros</th>
             </tr>
         </thead>
@@ -132,10 +161,26 @@ else
                 @foreach (var filter in filtros)
                 {
                     <tr>
-                        <td>@filter.NoCep</td>
-                        <td>@filter.DtInicial</td>
-                        <td>@filter.DtFinal</td>
-                        <td>@filter.NoContador</td>
+                        <td class="align-content-center">@filter.NoCep</td>
+                            <td class="align-content-center">@filter.DtInicial</td>
+                            <td class="align-content-center">@filter.DtFinal</td>
+                            <td class="align-content-center">
+                        @if (@filter.CdMei == "Sim")
+                        {
+                            <MudChip Color="Color.Success">@filter.CdMei</MudChip>
+                        }
+                        else if (@filter.CdMei == "Não")
+                        {
+                            <MudChip Color="Color.Error">@filter.CdMei</MudChip>
+                        }
+                        else
+                        {
+                            @filter.CdMei
+                        }
+                        </td>
+                            <td class="align-content-center">
+                                <MudText Typo="Typo.subtitle1">@filter.NoContador</MudText>
+                            </td>
                     </tr>
                 }
             }
@@ -159,10 +204,15 @@ else
     string alertText = string.Empty;
     bool showAlertMessage = false;
     int currentFilterIndex = 0;
+    bool showLoader = false;
 
     protected override async Task OnInitializedAsync()
     {
+        showLoader = true;
+        StateHasChanged();
         await GetFiltros();
+        showLoader = false;
+        StateHasChanged();
     }
     void GoToExport()
     {
@@ -245,6 +295,9 @@ else
 
     protected async void ImportFiltroData()
     {
+        showLoader = true;
+        StateHasChanged();
+
         showAlertMessage = true;
         alertText = "Filtro table data import in progress.";
         StateHasChanged();
@@ -252,9 +305,15 @@ else
         showAlertMessage = false;
         StateHasChanged();
         await GetFiltros();
+
+        showLoader = false;
+        StateHasChanged();
     }
     protected async void ImportCepData()
     {
+        showLoader = true;
+        StateHasChanged();
+
         showAlertMessage = true;
         alertText = "Cep table data import in progress.";
         StateHasChanged();
@@ -262,9 +321,15 @@ else
         showAlertMessage = false;
         StateHasChanged();
         await GetFiltros();
+
+        showLoader = false;
+        StateHasChanged();
     } 
     protected async void ImportAtivdadeData()
     {
+        showLoader = true;
+        StateHasChanged();
+
         showAlertMessage = true;
         alertText = "Atividade table data import in progress.";
         StateHasChanged();
@@ -272,6 +337,9 @@ else
         showAlertMessage = false;
         StateHasChanged();
         await GetFiltros();
+
+        showLoader = false;
+        StateHasChanged();
     }
 
 }

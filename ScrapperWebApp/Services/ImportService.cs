@@ -43,14 +43,20 @@ namespace ScrapperWebApp.Services
                             var dataTable = dataSet.Tables[0];
                             foreach (DataRow row in dataTable.Rows)
                             {
+                                if (row[0].ToString() == "no_cnpj") 
+                                {
+                                    continue;
+                                }
                                 Filtro obj = new Filtro();
                                 string value = row[0].ToString();
                                 string date_start = row[1].ToString();
                                 string date_end = row[2].ToString();
+                                string cd_mei = row[3].ToString();
 
                                 obj.NoCep = value;
                                 obj.DtInicial = DateTime.Parse(date_start);
                                 obj.DtFinal = DateTime.Parse(date_end);
+                                obj.CdMei = cd_mei;
                                 list.Add(obj);
                             }
                         }

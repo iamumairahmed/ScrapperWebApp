@@ -18,4 +18,5 @@ public partial class Filtro
     public int? NoContador { get; set; }
 
     public DateTime? DtExecucao { get; set; }
+    public string CdMei { get; set; }
 }

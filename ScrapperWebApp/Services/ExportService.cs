@@ -89,7 +89,7 @@ namespace ScrapperWebApp.Services
             }
             if (parameters.withPhone == true)
             {
-                //query = query.Where(e => e.WithPhone == parameters.WithPhone.Value);
+                query = query.Where(e => e.Telefones.All(x => Helper.IsCellPhone(x.NoFone)));
             }
             if (parameters.withoutMEI == true)
             {
@@ -97,7 +97,7 @@ namespace ScrapperWebApp.Services
             }
             if (parameters.cellOnly == true)
             {
-                //query = query.Where(e => e.CellOnly == parameters.CellOnly.Value);
+                query = query.Where(e => e.Telefones.All(x => Helper.IsLandline(x.NoFone)));
             }
             if (parameters.withEmail == true)
             { 

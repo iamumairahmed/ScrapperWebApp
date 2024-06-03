@@ -175,6 +175,10 @@ public partial class ScrapperDbContext : DbContext
             entity.Property(e => e.DtFinal)
                 .HasColumnType("date")
                 .HasColumnName("dt_final");
+            entity.Property(e => e.CdMei)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("cd_mei");
             entity.Property(e => e.DtExecucao)
                 .HasColumnType("date")
                 .HasColumnName("dt_execucao");

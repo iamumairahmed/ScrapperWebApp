@@ -1,11 +1,25 @@
 ﻿using ScrapperWebApp.Data;
 using System.ComponentModel;
 using System.Data;
+using System.Text.RegularExpressions;
 
 namespace ScrapperWebApp.Utility
 {
     public class Helper
     {
+        public static bool IsCellPhone(string phoneNumber)
+        {
+            // Regular expression for Brazilian cell phone numbers: (XX) 9XXXX-XXXX
+            string cellPhonePattern = @"^\(\d{2}\) 9\d{4}-\d{4}$";
+            return Regex.IsMatch(phoneNumber, cellPhonePattern);
+        }
+
+        public static bool IsLandline(string phoneNumber)
+        {
+            // Regular expression for Brazilian landline numbers: (XX) XXXX-XXXX
+            string landlinePattern = @"^\(\d{2}\) \d{4}-\d{4}$";
+            return Regex.IsMatch(phoneNumber, landlinePattern);
+        }
         public static DataTable ConvertToDataTable<T>(List<T> list)
         {
             DataTable dataTable = new DataTable();
