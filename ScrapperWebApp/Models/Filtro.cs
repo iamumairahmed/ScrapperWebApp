@@ -15,8 +15,7 @@ public partial class Filtro
 
     public DateTime DtFinal { get; set; }
 
-    public int? NoContador { get; set; }
-
+    public int? NoContador { get; set; } = 0;
     public DateTime? DtExecucao { get; set; }
     public string CdMei { get; set; }
 }

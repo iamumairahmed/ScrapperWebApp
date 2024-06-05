@@ -35,6 +35,9 @@ namespace ScrapperWebApp.Services
 
             var requestObject = new RequestObject();
 
+            filtro.DtFinal = DateTime.Parse("12/31/2024");
+            filtro.DtInicial = DateTime.Parse("01/01/2024");
+
             requestObject.query.situacao_cadastral = "ATIVA";
             requestObject.query.cep = [filtro.NoCep.ToString()];
             //2024-04-27
@@ -107,7 +110,10 @@ namespace ScrapperWebApp.Services
                                 var details_url = "https://casadosdados.com.br/solucao/cnpj/" + filtered + "-" + item.cnpj;
 
                                 var updatedEmpresa = await ScrapeDetailsHtml(details_url, empresa, filtro);
-                                data.Add(updatedEmpresa);
+                                if (updatedEmpresa != null)
+                                {
+                                    data.Add(updatedEmpresa);
+                                }
                             }
                         }
                     }
@@ -188,7 +194,7 @@ namespace ScrapperWebApp.Services
                 else if (responseObject.data.count > 1000)
                 {
                     filtro.DtExecucao = DateTime.Now;
-                    filtro.NoContador = responseObject.data.count;
+                    //filtro.NoContador = responseObject.data.count;
                     await _filtroService.UpdateFiltroAsync(filtro);
 
                 }
@@ -196,7 +202,7 @@ namespace ScrapperWebApp.Services
                 else
                 {
                     filtro.DtExecucao = DateTime.Now;
-                    filtro.NoContador = responseObject.data.count;
+                    //filtro.NoContador = responseObject.data.count;
                     await _filtroService.UpdateFiltroAsync(filtro);
                 }
 
@@ -367,6 +373,9 @@ namespace ScrapperWebApp.Services
                         var empresaMei = meiElements.FirstOrDefault().InnerText;
                         if ((filtro.CdMei != null && ((filtro.CdMei == "Sim" && empresaMei == "Sim") || (filtro.CdMei == "Não" && empresaMei == "Não"))) || filtro.CdMei == null)
                         {
+
+                            filtro.NoContador = filtro.NoContador + 1;
+
                             // GET TELEFONE
                             var telefoneElements = document.DocumentNode.SelectNodes("//*[contains(text(), 'Telefone')]");
                             if (telefoneElements != null)
@@ -564,12 +573,15 @@ namespace ScrapperWebApp.Services
                             }
                             else
                                 Console.WriteLine("No elements found with the text 'Sócios'.");
+                        
+                            
+                            return empresa;
                         }
                     }
                 }
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); return null; }
-            return empresa;
+            return null;
         }
        
         public Task<bool> CheckRegistered()
