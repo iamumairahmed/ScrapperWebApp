@@ -35,8 +35,6 @@ namespace ScrapperWebApp.Services
 
             var requestObject = new RequestObject();
 
-            filtro.DtFinal = DateTime.Parse("12/31/2024");
-            filtro.DtInicial = DateTime.Parse("01/01/2024");
 
             requestObject.query.situacao_cadastral = "ATIVA";
             requestObject.query.cep = [filtro.NoCep.ToString()];
@@ -118,6 +116,8 @@ namespace ScrapperWebApp.Services
                         }
                     }
                 }
+
+                await _filtroService.UpdateFiltroAsync(filtro);
             }
             else
             {

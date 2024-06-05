@@ -258,7 +258,7 @@
             currentFilterIndex = currentFilterIndex + 1;
             showFilter = true;
             StateHasChanged();
-            records = await @scrapperService.GetMainRecords(currentFilter);
+            //records = await @scrapperService.GetMainRecords(currentFilter);
             StateHasChanged();
             if (filtros == null || filtros.Count == 0)
             {
