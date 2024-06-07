@@ -149,7 +149,11 @@
                 </tr>
             </thead>
             <tbody>
-                @if (filtros == null || filtros.Count == 0)
+                @if (filtros != null && filtros.Count > 0)
+                {
+                    <tr><p class="text-danger"><em>Will load in phase 2</em></p></tr>
+                }
+                @* @if (filtros == null || filtros.Count == 0)
                 {
                     if (filtros.Count == 0)
                     {
@@ -187,7 +191,7 @@
                             </td>
                         </tr>
                     }
-                }
+                } *@
             </tbody>
         </table>
     }
