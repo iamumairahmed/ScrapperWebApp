@@ -11,6 +11,7 @@
 @inject IFiltroService filteroService
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime;
 
 <PageTitle>Scrapper</PageTitle>
 <MudOverlay Visible="showLoader" DarkBackground="true" ZIndex="9999">
@@ -217,9 +218,10 @@
         showLoader = false;
         StateHasChanged();
     }
-    void GoToExport()
+    async void GoToExport()
     {
-        NavigationManager.NavigateTo("Export");
+        await JSRuntime.InvokeVoidAsync("open", "Export", "_blank");
+        //NavigationManager.NavigateTo("Export");
     }
     protected async Task GetFiltros()
     {

@@ -46,7 +46,7 @@ namespace ScrapperWebApp.Services
             try
             {
                 var ctx = _context.CreateDbContext();
-                var estados = ctx.Ceps.Select(u => u.CdEstado).Distinct().ToList();
+                var estados = ctx.Ceps.Select(u => u.CdEstado).Distinct().OrderBy(x => x).ToList();
                 //var appSettingsVm = _mapper.Map<List<AppSettingVm>>(appsettigs);
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, estados);
             }

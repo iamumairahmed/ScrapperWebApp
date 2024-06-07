@@ -53,7 +53,7 @@ namespace ScrapperWebApp.Services
                 var ctx = _context.CreateDbContext();
 
                 //var filtros = _unitOfWork.Repository<Filtro>().GetMany(x => x.NoContador > 1000 && x.DtInicial < DateTime.Now).ToList();
-                var filtros = ctx.Filtros.ToList();
+                var filtros = ctx.Filtros.Where(x => x.NoContador >= 1000).ToList();
                 if (filtros != null)
                 {
                     //var filtrosMapped = _mapper.Map<Filtro>(filtros);
