@@ -1,4 +1,5 @@
 ﻿using ScrapperWebApp.Data;
+using ScrapperWebApp.Models;
 using System.ComponentModel;
 using System.Data;
 using System.Text.RegularExpressions;
@@ -10,14 +11,14 @@ namespace ScrapperWebApp.Utility
         public static bool IsCellPhone(string phoneNumber)
         {
             // Regular expression for Brazilian cell phone numbers: (XX) 9XXXX-XXXX
-            string cellPhonePattern = @"^\(\d{2}\) 9\d{4}-\d{4}$";
+            string cellPhonePattern = @"^\(?\d{2}\)? ?9\d{4}-?\d{4}$";
             return Regex.IsMatch(phoneNumber, cellPhonePattern);
         }
 
         public static bool IsLandline(string phoneNumber)
         {
             // Regular expression for Brazilian landline numbers: (XX) XXXX-XXXX
-            string landlinePattern = @"^\(\d{2}\) \d{4}-\d{4}$";
+            string landlinePattern = @"^\(?\d{2}\)? ?\d{4}-?\d{4}$";
             return Regex.IsMatch(phoneNumber, landlinePattern);
         }
         public static DataTable ConvertToDataTable<T>(List<T> list)
@@ -118,42 +119,91 @@ namespace ScrapperWebApp.Utility
                     }
                 }
 
+                table.Columns.Add("Responsavel");
+
                 foreach (T item in list)
                 {
 
-                    DataRow row = table.NewRow();
-                    foreach (PropertyDescriptor prop in properties)
+                    var sociosProperty = item.GetType().GetProperty("Socios");
+                    if (sociosProperty != null)
                     {
-                        if (columns.Contains(prop.Name))
+                        var socios = sociosProperty.GetValue(item) as IList<Socio>;
+                        if (socios != null && socios.Count > 0)
                         {
-                            if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
+                            foreach (var socio in socios)
                             {
-                                // Add each item in the list to the corresponding column
-                                var listt = prop.GetValue(item) as IEnumerable<Telefone>;
-                                object value = prop.GetValue(item);
-
-                                if (listt != null)
+                                DataRow row = table.NewRow();
+                                foreach (PropertyDescriptor prop in properties)
                                 {
-                                    int index = 1;
-                                    foreach (var listItem in listt)
+                                    if (columns.Contains(prop.Name))
                                     {
-                                        row[$"{prop.Name}{index++}"] = listItem.NoFone;
+                                        if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
+                                        {
+                                            // Add each item in the list to the corresponding column
+                                            var listt = prop.GetValue(item) as IEnumerable<Telefone>;
+                                            if (listt != null)
+                                            {
+                                                int index = 1;
+                                                foreach (var listItem in listt)
+                                                {
+                                                    row[$"{prop.Name}{index++}"] = listItem.NoFone;
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+                                        }
                                     }
                                 }
-                            }
-                            else
-                            {
-                                row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+                                // Set the value of ABC column for each socio
+                                row["Responsavel"] = socio.DsSocio; // Replace 'SomeValue' with the actual property name you want to use from socio
+                                table.Rows.Add(row);
                             }
                         }
                     }
-                    table.Rows.Add(row);
+                    else
+                    {
+                        DataRow row = table.NewRow();
+                        foreach (PropertyDescriptor prop in properties)
+                        {
+                            if (columns.Contains(prop.Name))
+                            {
+                                if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
+                                {
+                                    // Add each item in the list to the corresponding column
+                                    var listt = prop.GetValue(item) as IEnumerable<Telefone>;
+                                    object value = prop.GetValue(item);
+
+                                    if (listt != null)
+                                    {
+                                        int index = 1;
+                                        foreach (var listItem in listt)
+                                        {
+                                            row[$"{prop.Name}{index++}"] = listItem.NoFone;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+                                }
+                            }
+                        }
+                        table.Rows.Add(row);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Datatable Coversion Error: " + ex.ToString());
             }
+
+            if (table.Columns.Contains("Responsavel"))
+            {
+                table.Columns["Responsavel"].SetOrdinal(1); // Set to 1 for the second position (index is zero-based)
+            }
+
             return table;
         }
     }

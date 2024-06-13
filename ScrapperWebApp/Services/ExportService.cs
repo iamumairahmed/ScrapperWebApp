@@ -87,24 +87,34 @@ namespace ScrapperWebApp.Services
             {
                 query = query.Where(e => e.CdMei == "Yes");
             }
-            if (parameters.withPhone == true)
-            {
-                query = query.Where(e => e.Telefones.All(x => Helper.IsCellPhone(x.NoFone)));
-            }
+            //if (parameters.withPhone == true)
+            //{
+                //query = query.Where(e => e.Telefones.All(x => Helper.IsCellPhone(x.NoFone)));
+            //}
             if (parameters.withoutMEI == true)
             {
                 query = query.Where(e => e.CdMei == "No");
             }
-            if (parameters.cellOnly == true)
-            {
-                query = query.Where(e => e.Telefones.All(x => Helper.IsLandline(x.NoFone)));
-            }
+            //if (parameters.cellOnly == true)
+            //{
+                //query = query.Where(e => e.Telefones.All(x => Helper.IsLandline(x.NoFone)));
+            //}
             if (parameters.withEmail == true)
             { 
                 query = query.Where(e => !string.IsNullOrEmpty(e.CdEmail));
             }
 
-            var results = await query.Include(x => x.Telefones).ToListAsync();
+            var results = await query.Include(x => x.Telefones).Include(x => x.Socios).ToListAsync();
+
+            if (parameters.withPhone == true)
+            {
+                results = results.Where(e => e.Telefones.Count() > 0 && e.Telefones.All(x => Helper.IsCellPhone(x.NoFone))).ToList();
+            }
+            if (parameters.cellOnly == true)
+            {
+                results = results.Where(e => e.Telefones.Count() > 0 && e.Telefones.All(x => Helper.IsLandline(x.NoFone))).ToList();
+            }
+
             return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, results);
         }
     }
