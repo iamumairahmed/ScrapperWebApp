@@ -161,6 +161,36 @@ namespace ScrapperWebApp.Utility
                                 table.Rows.Add(row);
                             }
                         }
+                        else
+                        {
+                            DataRow row = table.NewRow();
+                            foreach (PropertyDescriptor prop in properties)
+                            {
+                                if (columns.Contains(prop.Name))
+                                {
+                                    if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
+                                    {
+                                        // Add each item in the list to the corresponding column
+                                        var listt = prop.GetValue(item) as IEnumerable<Telefone>;
+                                        object value = prop.GetValue(item);
+
+                                        if (listt != null)
+                                        {
+                                            int index = 1;
+                                            foreach (var listItem in listt)
+                                            {
+                                                row[$"{prop.Name}{index++}"] = listItem.NoFone;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+                                    }
+                                }
+                            }
+                            table.Rows.Add(row);
+                        }
                     }
                     else
                     {

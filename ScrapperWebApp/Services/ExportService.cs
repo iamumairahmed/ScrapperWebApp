@@ -106,11 +106,11 @@ namespace ScrapperWebApp.Services
 
             var results = await query.Include(x => x.Telefones).Include(x => x.Socios).ToListAsync();
 
-            if (parameters.withPhone == true)
+            if (parameters.cellOnly == true)
             {
                 results = results.Where(e => e.Telefones.Count() > 0 && e.Telefones.All(x => Helper.IsCellPhone(x.NoFone))).ToList();
             }
-            if (parameters.cellOnly == true)
+            if (parameters.withPhone == true)
             {
                 results = results.Where(e => e.Telefones.Count() > 0 && e.Telefones.All(x => Helper.IsLandline(x.NoFone))).ToList();
             }
