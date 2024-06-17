@@ -4,9 +4,9 @@ using ScrapperWebApp.Data;
 using System;
 using System.Collections.Generic;
 
-namespace ScrapperWebApp.Models;
+namespace ScrapperWebApp.Models.Dtos;
 
-public partial class Empresa
+public partial class EmpresaDto
 {
     public long NoCnpj { get; set; }
 
@@ -36,6 +36,8 @@ public partial class Empresa
 
     public string CdEmail { get; set; }
 
+    public string CdEstado { get; set; }
+
     public DateTime? DtAbertura { get; set; }
 
     public virtual ICollection<EmpAtividade> EmpAtividades { get; set; } = new List<EmpAtividade>();
@@ -45,6 +47,4 @@ public partial class Empresa
     public virtual ICollection<Socio> Socios { get; set; } = new List<Socio>();
 
     public virtual ICollection<Telefone> Telefones { get; set; } = new List<Telefone>();
-    public virtual ICollection<UraError> UraErrors { get; set; } = new List<UraError>();
-
 }

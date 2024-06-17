@@ -5,6 +5,7 @@
         public Task<bool> SeedFiltroData();
         public Task<bool> SeedCepData();
         public Task<bool> SeedAtividadeData();
+        public Task<bool> SeedURAWithErrorsData();
 
     }
 }

@@ -15,26 +15,37 @@ using HtmlAgilityPack;
 using ScrapperWebApp.Data;
 using System;
 using System.Xml.Linq;
+using DocumentFormat.OpenXml;
+using AutoMapper;
 
 namespace ScrapperWebApp.Services
 {
     public class ScrapperService : IScrapperService
     {
         private IFiltroService _filtroService;
+        private IURAService _uraService;
         private IConfiguration _configurationManager;
-        public ScrapperService(IFiltroService filtroService, IConfiguration configuration) {
+        private readonly IMapper _mapper;
+
+        public ScrapperService(IFiltroService filtroService, IConfiguration configuration, IMapper mapper, IURAService uraService)
+        {
             _filtroService = filtroService;
             _configurationManager = configuration;
+            _mapper = mapper;
+            _uraService = uraService;
         }
 
         private string url = "https://api.casadosdados.com.br/v2/public/cnpj/search";
-        public async Task<List<Empresa>> GetScrappedData(Filtro filtro){
+        public async Task<List<Empresa>> GetScrappedData(Filtro filtro)
+        {
 
             //ScrapeDetailsHtml("https://casadosdados.com.br/solucao/cnpj/fergus-holding-capital-ltda-53414766000189", new Empresa());
             var data = new List<Empresa>();
 
             var requestObject = new RequestObject();
 
+            //filtro.DtInicial = DateTime.Parse("01/01/2024");
+            //filtro.DtFinal = DateTime.Parse("12/31/2024");
 
             requestObject.query.situacao_cadastral = "ATIVA";
             requestObject.query.cep = [filtro.NoCep.ToString()];
@@ -104,7 +115,8 @@ namespace ScrapperWebApp.Services
                                 empresa.CdMei = item.cnpj_mei ? "Yes" : "No";
 
                                 string removedDots = item.razao_social.Replace(".", "");
-                                string filtered = removedDots.Replace(" ", "-");
+                                string removedCommas = item.razao_social.Replace(",", "");
+                                string filtered = removedCommas.Replace(" ", "-");
                                 var details_url = "https://casadosdados.com.br/solucao/cnpj/" + filtered + "-" + item.cnpj;
 
                                 var updatedEmpresa = await ScrapeDetailsHtml(details_url, empresa, filtro);
@@ -126,42 +138,6 @@ namespace ScrapperWebApp.Services
 
             return data;
 
-            //var obj = new Empresa();
-            //obj.NoCnpj = 2;
-            //obj.CdRzsocial = "MS CONTA MAIS";
-            //obj.CdTipo = "MATRIZ";
-            //obj.CdFantasia = "MAPAL";
-            //obj.DtAbertura = DateTime.Today;
-            //obj.CdSituacao = "ATIVA";
-            //obj.DtSituacao = DateTime.Today;
-            //obj.VlCapsocial = 10000;
-            //obj.NoNatjur = 2062;
-            //obj.CdLogra = "ESTRADA DA GAVEA";
-            //obj.NoCep = "00640";
-            //obj.CdEmail = "test@gmail.com";
-
-
-            //var socioObj = new Socio();
-            //socioObj.DsSocio = "FLAVIA ARAUJO";
-            //socioObj.DsTpSocio = "Socio-Administrator";
-            //socioObj.NoCnpj = 2;
-
-            //obj.Socios.Add(socioObj);
-
-            //socioObj.DsSocio = "FLAVIA ARAUJO 2";
-            //socioObj.DsTpSocio = "Socio-Administrator 2";
-            //socioObj.NoCnpj = 2;
-            //obj.Socios.Add(socioObj);
-
-            //var atividadeObj = new EmpAtividade();
-            //atividadeObj.NoAtividade = 124;
-            //atividadeObj.CdAtvPrincipal = "YES";
-            //atividadeObj.NoCnpj = 1;
-
-            //obj.EmpAtividades.Add(atividadeObj);
-
-            //data.Add(obj);
-            //return data;
         }
         public async Task<List<Filtro>> GetMainRecords(Filtro filtro)
         {
@@ -344,12 +320,12 @@ namespace ScrapperWebApp.Services
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
-        private async Task<Empresa> ScrapeDetailsHtml(string url, Empresa empresa, Filtro filtro) 
+        private async Task<Empresa> ScrapeDetailsHtml(string url, Empresa empresa, Filtro filtro)
         {
             try
             {
                 var requestObject = new RequestObject();
-               
+
                 var jsonRequest = JsonSerializer.Serialize(requestObject);
                 var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
                 HttpClient client = new HttpClient();
@@ -573,8 +549,8 @@ namespace ScrapperWebApp.Services
                             }
                             else
                                 Console.WriteLine("No elements found with the text 'Sócios'.");
-                        
-                            
+
+
                             return empresa;
                         }
                     }
@@ -583,21 +559,22 @@ namespace ScrapperWebApp.Services
             catch (Exception ex) { Console.WriteLine(ex.Message); return null; }
             return null;
         }
-       
-        public Task<bool> CheckRegistered()
+
+        public Task<bool> CheckRegistered(List<UraError> uraErrors)
         {
             try
             {
-                var records = ReadFile();
-
+                //var records = ReadFile();
+                var records = ConvertURAErrorToPersons(uraErrors);
+                List<Person> personsToSave = new List<Person>();
                 ChromeOptions options = new ChromeOptions();
-                //options.AddArgument("--headless"); // Run Chrome in headless mode (without opening GUI)
+                ////options.AddArgument("--headless"); // Run Chrome in headless mode (without opening GUI)
 
-                // Initialize Chrome WebDriver
+                //// Initialize Chrome WebDriver
                 using (var driver = new ChromeDriver(options))
                 {
 
-                    //driver.Navigate().GoToUrl(fileUrl);
+                    //driver.Navigate().GoToUrl("D:\\Fiverr\\SamuelRoncetti\\Indicação Conta Corrente.html");
 
                     // Login Flow 
                     // Navigate to the website
@@ -618,7 +595,7 @@ namespace ScrapperWebApp.Services
 
                         if (inputElement != null)
                         {
-                            inputElement.SendKeys("sandra.coelho.001@c6partner.com");
+                            inputElement.SendKeys("barbara.roncetti@okbank.com.br");
                         }
 
                         IWebElement passElement = driver.FindElement(By.Id("sfdc_password_container"));
@@ -626,7 +603,7 @@ namespace ScrapperWebApp.Services
 
                         if (inputPassElement != null)
                         {
-                            inputPassElement.SendKeys("Okbank@2024!!!");
+                            inputPassElement.SendKeys("GeOkbank@2024!!!");
                         }
 
                         IWebElement buttonElement = driver.FindElement(By.CssSelector(".slds-button.slds-button--brand.loginButton.uiButton--none.uiButton"));
@@ -638,7 +615,7 @@ namespace ScrapperWebApp.Services
                         //var leadElem = driver.FindElements(By.XPath("//*[@id=\"commThemeNav\"]/div/div/nav/ul/li[5]"));
                     }
 
-                    Thread.Sleep(10000);
+                    Thread.Sleep(5000);
                     driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
                     //IWebElement verificationMsgElem = driver.FindElements(By.XPath("verifique seu dispositivo móvel"));
                     bool verificationDone = false;
@@ -679,7 +656,7 @@ namespace ScrapperWebApp.Services
                         }
                         // "Verifique seu dispositivo móvel"
                         // Solicitação cancelada
-                        if (elements == null || elements.Count == 0) 
+                        if (elements == null || elements.Count == 0)
                         {
                             verificationDone = true;
                         }
@@ -692,14 +669,14 @@ namespace ScrapperWebApp.Services
                     // Keep looping until Enter key is pressed
                     //}
 
-                    Thread.Sleep(5000);
+                    Thread.Sleep(2500);
                     IWebElement leadLink = driver.FindElement(By.XPath("//a[text()='Leads']"));
                     if (leadLink != null)
                     {
                         leadLink.Click();
                     }
 
-                    Thread.Sleep(5000);
+                    Thread.Sleep(2500);
                     //driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
 
                     IWebElement novoLEadElem = driver.FindElement(By.CssSelector(".createRecordWrapper.forceCommunityCreateRecordButton"));
@@ -707,10 +684,14 @@ namespace ScrapperWebApp.Services
                     {
                         novoLEadElem.Click();
                     }
-                    Thread.Sleep(3000);
+                    Thread.Sleep(1500);
+
+                    //List<UraError> errors = new List<UraError>();
+                    int count = 0;
                     foreach (var r in records)
                     {
-                        try {
+                        try
+                        {
                             IWebElement firstnameElem = driver.FindElement(By.CssSelector(".firstName.compoundBorderBottom.form-element__row.input"));
                             if (firstnameElem != null)
                             {
@@ -778,7 +759,15 @@ namespace ScrapperWebApp.Services
                                 }
                             }
 
-                            IWebElement divConfirmarElement = driver.FindElement(By.CssSelector(".slds-button.slds-button--neutral.button.uiButton--default.uiButton--brand.uiButton"));
+                            //IWebElement divConfirmarElement = driver.FindElement(By.CssSelector(".slds-button.slds-button--neutral.button.uiButton--default.uiButton--brand.uiButton"));
+                            IWebElement divConfirmarElement = driver.FindElement(By.CssSelector(".slds-button.slds-button_neutral.button.uiButton--default.uiButton--brand.uiButton"));
+
+                            //IWebElement button = driver.FindElement(By.XPath("//button[span[text()='Confirmar']]"));
+                            //if (button != null)
+                            //{
+                            //    button.Click();
+                            //}
+
 
                             //IWebElement confirmarButtonn = driver.FindElement(By.XPath("//button[contains(text(),'Confirmar')]"));
 
@@ -787,7 +776,7 @@ namespace ScrapperWebApp.Services
                                 divConfirmarElement.Click();
                             }
 
-                            Thread.Sleep(1000);
+                            Thread.Sleep(500);
 
                             // Check Errors
                             var phoneError = driver.FindElements(By.CssSelector(".has-error.uiInputDefaultError.uiInput.uiInputPhone.uiInput--default.uiInput--input"));
@@ -803,17 +792,25 @@ namespace ScrapperWebApp.Services
                             }
 
                             Console.WriteLine(DateTime.Now.ToShortTimeString() + ": Processed " + r.Firstname + " " + r.Lastname + ".");
+                            //personsToSave.Add(r);
+                            count++;
+                            //if (count % 50 == 0)
+                            //{
+                            SaveURAErrors(r);
+                            //personsToSave.Clear();
+                            //}
                         }
                         catch (Exception ex)
                         {
                             Console.WriteLine(ex.Message);
                         }
-                    }
 
-                    WriteExcel(records);
+                    }
+                    //WriteExcel(records);
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 Console.WriteLine(ex.Message);
                 return Task.FromResult(false);
             }
@@ -821,29 +818,47 @@ namespace ScrapperWebApp.Services
             return Task.FromResult(true);
         }
 
-        private void WriteExcel(List<Person> peopleList){
+        private void WriteExcel(List<Person> peopleList)
+        {
             string base64String;
-
             using (var wb = new XLWorkbook())
             {
                 var datatable = Helper.ConvertToDataTable(peopleList);
                 var sheet = wb.AddWorksheet(datatable, "URA With Errors");
-
-                // Apply font color to columns 1 to 5
                 sheet.Columns(1, 5).Style.Font.FontColor = XLColor.Black;
                 wb.SaveAs(_configurationManager["DirectoryPath"] + "URA with Errors.xlsx");
-                //using (var ms = new MemoryStream())
-                //{
-                //    wb.SaveAs(ms);
-
-                //    // Convert the Excel workbook to a base64-encoded string
-                //    base64String = Convert.ToBase64String(ms.ToArray());
-                //}
             }
-
         }
-        
-        private List<Person> ReadFile() 
+        private bool SaveURAErrors(Person p)
+        {
+            //foreach (var p in persons) 
+            //{
+            try
+            {
+                UraError uraError = new UraError();
+                uraError.NoUraErr = p.NoUraErr;
+                uraError.CdErrors = string.Join(", ", p.Errors);
+                uraError.NoFone1 = p.Telefone;
+                uraError.CdRzsocial = p.Razao;
+                uraError.DsSocio = p.Firstname + " " + p.Lastname;
+
+                _uraService.UpdateURAAsync(uraError);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return false;
+            }
+            //}
+            return true;
+        }
+        private List<Person> ConvertURAErrorToPersons(List<UraError> uraErrors)
+        {
+            List<Person> persons = new List<Person>();
+            persons = _mapper.Map<List<Person>>(uraErrors);
+            return persons;
+        }
+        private List<Person> ReadFile()
         {
             List<Person> list = new List<Person>();
             try
@@ -869,17 +884,23 @@ namespace ScrapperWebApp.Services
                             foreach (DataRow row in dataTable.Rows)
                             {
                                 Person obj = new Person();
-                                obj.Telefone = row[0].ToString();
-                                var nameTokens = row[1].ToString().Split(" ");
+
+                                obj.Cnpj = row["NoCnpj"].ToString();
+                                var name = row["Responsavel"].ToString();
+                                var nameTokens = name.ToString().Split(" ");
                                 if (nameTokens.Count() > 1)
                                 {
                                     obj.Firstname = nameTokens[0];
                                     obj.Lastname = row[1].ToString().Substring(row[1].ToString().IndexOf(" "), row[1].ToString().Length - row[1].ToString().IndexOf(" ")).Trim();
                                 }
-                                obj.Razao = row[2].ToString();
-                                obj.Email = row[3].ToString();
-                                obj.Cnpj = row[4].ToString();
-                               
+                                obj.Razao = row["CdRzsocial"].ToString();
+                                obj.Email = row["CdEmail"].ToString();
+                                obj.Telefone = row["Telefones1"].ToString();
+
+                                //obj.Telefone = row[0].ToString();
+                                //obj.Razao = row[2].ToString();
+                                //obj.Email = row[3].ToString();
+                                //obj.Cnpj = row[4].ToString();
 
                                 list.Add(obj);
                             }
@@ -889,17 +910,6 @@ namespace ScrapperWebApp.Services
                             Console.WriteLine("Sheet doesn't exist");
                             return null;
                         }
-
-                        //if (list.Count > 0)
-                        //{
-                        //    await _cepService.DeleteAllAsync();
-                        //    await _cepService.CreateCepsAsync(list);
-                        //}
-                        //else
-                        //{
-                        //    Console.WriteLine("No Data Found!");
-                        //    return false;
-                        //}
                     }
                 }
             }

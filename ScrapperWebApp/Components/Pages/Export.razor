@@ -1,6 +1,7 @@
 ﻿@page "/Export"
-@using ScrapperWebApp.Data
 @using ScrapperWebApp.Models
+@using ScrapperWebApp.Models.Dtos
+@using ScrapperWebApp.Data
 @using ScrapperWebApp.Services
 @using ScrapperWebApp.Services.Interfaces
 @attribute [StreamRendering]
@@ -8,7 +9,7 @@
 @inject ICepService cepService
 @inject IExportService exportService
 @inject INatJurService natJurService
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
 @inject ISnackbar Snackbar
 
 <PageTitle>Export</PageTitle>
@@ -196,7 +197,7 @@
     public int totalRecords = 0;
     public bool showTotalRecords = false;
     public string cep = "";
-    List<Empresa> searchResults = new List<Empresa>();
+    List<EmpresaDto> searchResults = new List<EmpresaDto>();
     List<Atividade> atividades = new List<Atividade>();
     List<Cep> ceps = new List<Cep>();
     List<NatJur> natJurs = new List<NatJur>();

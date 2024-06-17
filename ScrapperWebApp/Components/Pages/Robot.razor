@@ -1,0 +1,228 @@
+﻿@page "/Robot"
+@using ScrapperWebApp.Data
+@using ScrapperWebApp.Models
+@using ScrapperWebApp.Services
+@using ScrapperWebApp.Services.Interfaces
+@attribute [StreamRendering]
+@inject IScrapperService scrapperService
+@inject IURAService uraservice
+@inject IExportService exportService
+@inject IImportService importService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+<MudSnackbarProvider />
+
+<MudDialogProvider />
+<PageTitle>Export</PageTitle>
+<MudOverlay Visible="!loadingCompleted" DarkBackground="true" ZIndex="9999">
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+</MudOverlay>
+<MudContainer Class="mt-16" MaxWidth="MaxWidth.ExtraLarge">
+<div class="row">
+    <div class="col-4">
+        <h2>Scrapper Errors Leads</h2>
+    </div>
+</div>
+
+<hr />
+    <div class="mb-3">
+        <div class="form-row">
+            <div class="col-6">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText>Total De Registros</MudText>
+                        <MudText Typo="Typo.h2">@totalRegistros</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+            <div class="col-6">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText>Analisados</MudText>
+                        <MudText Typo="Typo.h2">@forAnalysis</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </div>
+
+    </div>
+
+    <hr />
+    <div class="mb-3 text-center">
+            <MudButton @onclick="StartRobot" StartIcon="@Icons.Material.Filled.NotStarted" Variant="Variant.Filled" Size="Size.Small" Color="Color.Success">Iniciar Analise Errors</MudButton>
+            <MudButton @onclick="ImportURA" StartIcon="@Icons.Material.Filled.ArrowDownward" Variant="Variant.Filled" Size="Size.Small" Color="Color.Warning">Importar URA</MudButton>
+            <MudButton @onclick="ExportURA" StartIcon="@Icons.Material.Filled.ArrowUpward" Variant="Variant.Filled" Size="Size.Small" Color="Color.Info">Exportar Analisados</MudButton>
+            <MudButton @onclick="DeleteURA" StartIcon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Size="Size.Small" Color="Color.Error">Limpar Tabela URA</MudButton>
+
+        <MudAlert Severity="Severity.Warning" hidden="@hideError">@errorMsg</MudAlert>
+        @if (showExportAlert)
+        {
+            <MudAlert Severity="Severity.Success" ContentAlignment="HorizontalAlignment.Center" ShowCloseIcon="true" CloseIconClicked="(() => CloseExportAlert(false))">File Exported Successfully!</MudAlert>
+        }
+    </div>
+</MudContainer> 
+@code {
+    bool showExportAlert = false;
+    string sitCadId = string.Empty;
+    public bool loadingCompleted = false;
+    string errorMsg = string.Empty;
+    bool IsDisabled = true;
+    bool hideError = true;
+    List<UraError> searchResults = new List<UraError>();
+    int totalRegistros = 0;
+    int forAnalysis = 0;
+    protected async void StartRobot()
+    {
+        var results = await uraservice.GetURAAsync();
+        if (results.Success)
+        {
+            await scrapperService.CheckRegistered(results.Output);
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        loadingCompleted = false;
+        StateHasChanged();
+
+        await GetCounts();
+
+        loadingCompleted = true;
+        StateHasChanged();
+    }
+    private async void DeleteURA()
+    {
+        var parameters = new DialogParameters<Dialog>();
+        parameters.Add(x => x.ContentText, "Do you really want to delete these records? This process cannot be undone.");
+        parameters.Add(x => x.ButtonText, "Delete");
+        parameters.Add(x => x.Color, Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialog = await DialogService.ShowAsync<Dialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            //In a real world scenario we would reload the data from the source here since we "removed" it in the dialog already.
+            if (bool.Parse(result.Data.ToString()) == true)
+            {
+                Snackbar.Add("URA Data Deleted Successfully...", Severity.Success, config =>
+                {
+                    config.ShowCloseIcon = false;
+                    config.HideIcon = true;
+                });
+            }
+            else
+            {
+                Snackbar.Add("Error Occurred While Deeleting URA Errors Data...", Severity.Error, config =>
+                {
+                    config.ShowCloseIcon = false;
+                    config.HideIcon = true;
+                });
+            }
+
+            await GetCounts();
+            StateHasChanged();
+        }
+
+    }
+    private void CloseExportAlert(bool value)
+    {
+        showExportAlert = false;
+    }
+    protected async void ImportURA()
+    {
+        // SeedURAWithErrorsData
+        loadingCompleted = false;
+        StateHasChanged();
+
+        bool uraSeederCompleted = await importService.SeedURAWithErrorsData();
+        if (uraSeederCompleted)
+        {
+            Snackbar.Add("URA Data Imported Successfully...", Severity.Success, config =>
+            {
+                config.ShowCloseIcon = false;
+                config.HideIcon = true;
+            });
+        }
+        else
+        {
+            Snackbar.Add("Error Occurred While Importing Data...", Severity.Error, config =>
+            {
+                config.ShowCloseIcon = false;
+                config.HideIcon = true;
+            });
+        }
+
+        await GetCounts(); 
+        loadingCompleted = true;
+        StateHasChanged();
+    }
+    protected async void ExportURA()
+    {
+        loadingCompleted = false;
+        StateHasChanged();
+        var results = await uraservice.GetURAAsync();
+        if (results.Success)
+        {
+            searchResults = results.Output;
+            if (searchResults != null && searchResults.Count() > 0)
+            {
+                await exportService.ExportURAData(searchResults);
+                Snackbar.Add("File Exported Successfully!", Severity.Success, config =>
+                {
+                    config.ShowCloseIcon = false;
+                    config.HideIcon = true;
+                });
+            }
+            else
+            {
+                Snackbar.Add("No records to Export", Severity.Error, config =>
+                {
+                    config.ShowCloseIcon = false;
+                    config.HideIcon = true;
+                });
+                errorMsg = "No records to Export";
+                hideError = false;
+            }
+        }
+
+        await GetCounts();
+
+        showExportAlert = true;
+        loadingCompleted = true;
+        StateHasChanged();
+
+    }
+    protected async void Search()
+    {
+        //loadingCompleted = false;
+        // showTotalRecords = false;
+        // StateHasChanged();
+        // var results = await exportService.SearchExportData(exportDto);
+        // if (results.Success)
+        // {
+        //     totalRecords = results.Output.Count;
+        //     searchResults = results.Output;
+        //     IsDisabled = false;
+        //     showTotalRecords = true;
+        //     loadingCompleted = true;
+        //     StateHasChanged();
+        // }
+    }
+
+    protected async Task GetCounts()
+    {
+        var countResults = await uraservice.GetForAnalysisCountAsync();
+        if (countResults.Success)
+        {
+            forAnalysis = countResults.Output;
+        }
+
+        var resultsTotal = await uraservice.GetRegistrosCountAsync();
+        if (resultsTotal.Success)
+        {
+            totalRegistros = resultsTotal.Output;
+        }
+    }
+}

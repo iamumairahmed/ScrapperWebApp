@@ -9,9 +9,13 @@
 @inject IEmpresaService empresaService
 @inject IImportService importService
 @inject IFiltroService filteroService
-@rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime;
+@inject ISnackbar Snackbar
+@inject ISnackbar SnackbarService
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+<MudSnackbarProvider />
 
 <PageTitle>Scrapper</PageTitle>
 <MudOverlay Visible="showLoader" DarkBackground="true" ZIndex="9999">
@@ -63,7 +67,7 @@
             </div>
             <div class="col-6"></div>
             <div class="col-3 text-right" style="text-align: right !important">
-                <button class="btn btn-danger float-end">Stop Scrapper</button>
+                <button class="btn btn-danger float-end" @onclick="StopProcess">Stop Scrapper</button>
             </div>
         </div>
         <br />
@@ -121,7 +125,8 @@
                                 @currentFilter.CdMei
                             }
                         </td>
-                        <td class="align-content-center">@currentFilter.NoContador
+                        <td class="align-content-center">
+                            @currentFilter.NoContador
                         </td>
                         <td class="align-content-center">0</td>
                     </tr>
@@ -154,44 +159,44 @@
                     <tr><p class="text-danger"><em>Will load in phase 2</em></p></tr>
                 }
                 @* @if (filtros == null || filtros.Count == 0)
-                {
-                    if (filtros.Count == 0)
-                    {
-                        <tr><p class="text-danger"><em>No Filters Found...</em></p></tr>
-                    }
-                    else
-                    {
-                        <tr><p class="text-success"><em>Loading Filters...</em></p></tr>
-                    }
-                }
-                else
-                {
-                    @foreach (var filter in filtros)
-                    {
-                        <tr>
-                            <td class="align-content-center">@filter.NoCep</td>
-                            <td class="align-content-center">@filter.DtInicial</td>
-                            <td class="align-content-center">@filter.DtFinal</td>
-                            <td class="align-content-center">
-                                @if (@filter.CdMei == "Sim")
-                                {
-                                    <MudChip Color="Color.Success">@filter.CdMei</MudChip>
-                                }
-                                else if (@filter.CdMei == "Não")
-                                {
-                                    <MudChip Color="Color.Error">@filter.CdMei</MudChip>
-                                }
-                                else
-                                {
-                                    @filter.CdMei
-                                }
-                            </td>
-                            <td class="align-content-center">
-                                <MudText Typo="Typo.subtitle1">@filter.NoContador</MudText>
-                            </td>
-                        </tr>
-                    }
-                } *@
+            {
+            if (filtros.Count == 0)
+            {
+            <tr><p class="text-danger"><em>No Filters Found...</em></p></tr>
+            }
+            else
+            {
+            <tr><p class="text-success"><em>Loading Filters...</em></p></tr>
+            }
+            }
+            else
+            {
+            @foreach (var filter in filtros)
+            {
+            <tr>
+            <td class="align-content-center">@filter.NoCep</td>
+            <td class="align-content-center">@filter.DtInicial</td>
+            <td class="align-content-center">@filter.DtFinal</td>
+            <td class="align-content-center">
+            @if (@filter.CdMei == "Sim")
+            {
+            <MudChip Color="Color.Success">@filter.CdMei</MudChip>
+            }
+            else if (@filter.CdMei == "Não")
+            {
+            <MudChip Color="Color.Error">@filter.CdMei</MudChip>
+            }
+            else
+            {
+            @filter.CdMei
+            }
+            </td>
+            <td class="align-content-center">
+            <MudText Typo="Typo.subtitle1">@filter.NoContador</MudText>
+            </td>
+            </tr>
+            }
+            } *@
             </tbody>
         </table>
     }
@@ -213,6 +218,7 @@
     bool showAlertMessage = false;
     int currentFilterIndex = 0;
     bool showLoader = false;
+    private CancellationTokenSource _cancellationTokenSource;
 
     protected override async Task OnInitializedAsync()
     {
@@ -248,50 +254,85 @@
     {
         return filtros.Count == 0 ? true : false;
     }
-    protected void CheckRegisteredUsers()
+    async void CheckRegisteredUsers()
     {
-        scrapperService.CheckRegistered();
-
+        await JSRuntime.InvokeVoidAsync("open", "Robot", "_blank");
     }
     protected async void GetScrappedData()
     {
-        loader = true;
-
-        // loop to iterate all filters
-        foreach (var filter in filtros)
+        _cancellationTokenSource = new CancellationTokenSource();
+       
+        Snackbar.Add("Starting Scrapper...", Severity.Success, config =>
         {
-            currentFilter = filter;
-            currentFilterIndex = currentFilterIndex + 1;
-            showFilter = true;
-            StateHasChanged();
-            //records = await @scrapperService.GetMainRecords(currentFilter);
-            StateHasChanged();
-            if (filtros == null || filtros.Count == 0)
-            {
-                error = "No Data Found for this Filtro";
-            }
-            else
-            {
-                // Get Scrapped results
-                Console.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": Starting Filter " + filter.NoCep);
+            config.ShowCloseIcon = false;
+            config.HideIcon = true;
+        });
 
-                var data = await @scrapperService.GetScrappedData(filter);
+        loader = true;
+        try
+        {
+            // loop to iterate all filters
+            foreach (var filter in filtros)
+            {
+                currentFilter = filter;
+                currentFilterIndex = currentFilterIndex + 1;
+                showFilter = true;
+                StateHasChanged();
+                //records = await @scrapperService.GetMainRecords(currentFilter);
+                StateHasChanged();
 
-                // Save Parsed results to Empresa and linked tables
-                if (data != null && data.Count() > 0)
+                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+
+                if (filtros == null || filtros.Count == 0)
                 {
-                    await empresaService.CreateEmpresaAsync(data);
+                    error = "No Data Found for this Filtro";
                 }
-                // Add 1 day to dt_inicial and dt_final
-                await filteroService.UpdateFiltroDatesAsync(filter);
-                Console.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": Ending Filter " + filter.NoCep);
+                else
+                {
+                    // Get Scrapped results
+                    Console.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": Starting Filter " + filter.NoCep);
+                    var data = await @scrapperService.GetScrappedData(filter);
+
+                    // Save Parsed results to Empresa and linked tables
+                    if (data != null && data.Count() > 0)
+                    {
+                        await empresaService.CreateEmpresaAsync(data);
+                    }
+                    // Add 1 day to dt_inicial and dt_final
+                    await filteroService.UpdateFiltroDatesAsync(filter);
+                    Console.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": Ending Filter " + filter.NoCep);
+                }
+                currentFilter = null;
+                showFilter = false;
+                StateHasChanged();
             }
-            currentFilter = null;
-            showFilter = false;
-            StateHasChanged();
+        }
+        catch (OperationCanceledException)
+        {
+           Snackbar.Add("Scrapper Stopped...", Severity.Success, config =>
+           {
+               config.ShowCloseIcon = false;
+               config.HideIcon = true;
+           });
         }
         loader = false;
         StateHasChanged();
+    }
+    private void StopProcess()
+    {
+        if (_cancellationTokenSource != null)
+        {
+            _cancellationTokenSource.Cancel();
+            Snackbar.Add("Scrapper Stopping...", Severity.Warning, config =>
+              {
+                  config.ShowCloseIcon = false;
+                  config.HideIcon = true;
+              });
+            
+            currentFilter = new Filtro();
+            currentFilterIndex = 0;
+            StateHasChanged();
+        }
     }
     protected async void ScrapeDetails()
     {

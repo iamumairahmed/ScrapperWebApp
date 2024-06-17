@@ -45,6 +45,10 @@
       {
          "Name": "[dbo].[Telefone]",
          "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Ura_Errors]",
+         "ObjectType": 0
       }
    ],
    "UiHint": null,

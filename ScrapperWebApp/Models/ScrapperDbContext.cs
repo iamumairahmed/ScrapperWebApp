@@ -26,6 +26,7 @@ public partial class ScrapperDbContext : DbContext
 
     public virtual DbSet<Socio> Socios { get; set; }
     public virtual DbSet<Telefone> Telefones { get; set; }
+    public virtual DbSet<UraError> UraErrors { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -236,6 +237,52 @@ public partial class ScrapperDbContext : DbContext
                 .HasForeignKey(d => d.NoCnpj)
                 .OnDelete(DeleteBehavior.ClientCascade)
                 .HasConstraintName("FK__Telefone__no_cnp__625A9A57");
+        });
+
+        modelBuilder.Entity<UraError>(entity =>
+        {
+            entity.HasKey(e => e.NoUraErr).HasName("PK__Ura_Erro__629DCF3BDD301CE8");
+
+            entity.ToTable("Ura_Errors");
+
+            entity.Property(e => e.NoUraErr).HasColumnName("no_ura_err");
+            entity.Property(e => e.CdEmail)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("cd_email");
+            entity.Property(e => e.CdErrors)
+                .HasMaxLength(1000)
+                .IsUnicode(false)
+                .HasColumnName("cd_errors");
+            entity.Property(e => e.CdRzsocial)
+                .HasMaxLength(150)
+                .IsUnicode(false)
+                .HasColumnName("cd_rzsocial");
+            entity.Property(e => e.DsSocio)
+                .HasMaxLength(150)
+                .IsUnicode(false)
+                .HasColumnName("ds_socio");
+            entity.Property(e => e.NoCnpj).HasColumnName("no_cnpj");
+            entity.Property(e => e.NoFone1)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("no_fone1");
+            entity.Property(e => e.NoFone2)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("no_fone2");
+            entity.Property(e => e.NoFone3)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("no_fone3");
+            entity.Property(e => e.NoFone4)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("no_fone4");
+
+            entity.HasOne(d => d.NoCnpjNavigation).WithMany(p => p.UraErrors)
+                .HasForeignKey(d => d.NoCnpj)
+                .HasConstraintName("FK__Ura_Error__no_cn__1E6F845E");
         });
 
         OnModelCreatingPartial(modelBuilder);

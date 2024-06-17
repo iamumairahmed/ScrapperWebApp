@@ -8,15 +8,17 @@ namespace ScrapperWebApp.Services
     public class ImportService : IImportService
     {
         private IFiltroService _filtroService;
+        private IURAService _uraService;
         private ICepService _cepService;
         private IAtividadeService _atividadeService;
         private IConfiguration _configurationManager;
-        public ImportService(IFiltroService filtroService, IAtividadeService atividadeService, ICepService cepService, IConfiguration configurationManager)
+        public ImportService(IFiltroService filtroService, IAtividadeService atividadeService, ICepService cepService, IConfiguration configurationManager, IURAService uraService)
         {
             _filtroService = filtroService;
             _atividadeService = atividadeService;
             _cepService = cepService;
             _configurationManager = configurationManager;
+            _uraService = uraService;
         }
 
         public async Task<bool> SeedFiltroData(){
@@ -213,6 +215,86 @@ namespace ScrapperWebApp.Services
                 return false;
             }
             return true;
+        }
+        public async Task<bool> SeedURAWithErrorsData()
+        {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            List<UraError> list = new List<UraError>();
+            try
+            {
+                var filepath = _configurationManager["UraFilePath"];
+                using (var streamval = File.Open(filepath, FileMode.Open, FileAccess.Read))
+                {
+                    using (var reader = ExcelReaderFactory.CreateReader(streamval))
+                    {
+                        var configuration = new ExcelDataSetConfiguration
+                        {
+                            ConfigureDataTable = _ => new ExcelDataTableConfiguration
+                            {
+                                UseHeaderRow = true
+                            }
+                        };
+                        var dataSet = reader.AsDataSet(configuration);
+
+                        if (dataSet.Tables.Count > 0)
+                        {
+                            var dataTable = dataSet.Tables[0];
+                           
+                            foreach (DataRow row in dataTable.Rows)
+                            {
+                                UraError obj = new UraError();
+                                string NoCnpj = row["NoCnpj"].ToString();
+                                string Responsavel = row["Responsavel"].ToString();
+                                string CdRzsocial = row["CdRzsocial"].ToString();
+                                string CdEmail = row["CdEmail"].ToString();
+                                string Fone1 = row["Telefones1"].ToString();
+                                string Fone2 = GetColumnValue(row, "Telefones2");
+                                string Fone3 = GetColumnValue(row, "Telefones3");
+                                string Fone4 = GetColumnValue(row, "Telefones4");
+
+                                obj.NoCnpj = Int64.Parse(NoCnpj);
+                                obj.CdRzsocial = CdRzsocial;
+                                obj.DsSocio = Responsavel;
+                                obj.CdEmail = CdEmail;
+                                obj.NoFone1 = Fone1;
+                                obj.NoFone2 = Fone2;
+                                obj.NoFone3 = Fone3;
+                                obj.NoFone4 = Fone4;
+                                list.Add(obj);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Sheet doesn't exist");
+                            return false;
+
+                        }
+
+                        if (list.Count > 0)
+                        {
+                            //await _.DeleteAllAsync();
+                            await _uraService.CreateURAAsync(list);
+                        }
+                        else
+                        {
+                            Console.WriteLine("No Data Found!");
+                            return false;
+
+                        }
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+            return true;
+        }
+        private static string GetColumnValue(DataRow row, string columnName)
+        {
+            return row.Table.Columns.Contains(columnName) ? row[columnName]?.ToString() ?? string.Empty : string.Empty;
         }
     }
 }

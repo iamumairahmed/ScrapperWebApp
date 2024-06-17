@@ -34,7 +34,10 @@ namespace ScrapperWebApp.Utility
                 foreach (var property in properties)
                 {
                     Type propertyType = property.PropertyType;
-
+                    if (property.Name.EndsWith("Navigation")) 
+                    {
+                        continue;
+                    }
                     // Check if property type is a list
                     if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
                     {
@@ -53,6 +56,10 @@ namespace ScrapperWebApp.Utility
                     DataRow dataRow = dataTable.NewRow();
                     foreach (var property in properties)
                     {
+                        if (property.Name.EndsWith("Navigation"))
+                        {
+                            continue;
+                        }
                         object value = property.GetValue(item);
 
                         // Check if property is a list
@@ -88,7 +95,7 @@ namespace ScrapperWebApp.Utility
             DataTable dataTable = new DataTable();
             DataTable table = new DataTable();
 
-            List<string> columns = ["NoCnpj", "CdRzsocial", "CdEmail", "Telefones"];
+            List<string> columns = ["NoCnpj", "CdRzsocial", "CdEmail", "Telefones", "CdEstado"];
             try
             {
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(typeof(T));
@@ -127,8 +134,8 @@ namespace ScrapperWebApp.Utility
                     var sociosProperty = item.GetType().GetProperty("Socios");
                     if (sociosProperty != null)
                     {
-                        var socios = sociosProperty.GetValue(item) as IList<Socio>;
-                        if (socios != null && socios.Count > 0)
+                        var socios = sociosProperty.GetValue(item) as IEnumerable<Socio>;
+                        if (socios != null && socios.Count() > 0)
                         {
                             foreach (var socio in socios)
                             {

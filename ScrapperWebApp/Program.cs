@@ -1,5 +1,7 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer.Infrastructure.Internal;
+using MudBlazor;
 using MudBlazor.Services;
 using ScrapperWebApp;
 using ScrapperWebApp.Components;
@@ -32,8 +34,20 @@ builder.Services.AddScoped<IScrapperService, ScrapperService>();
 builder.Services.AddScoped<IImportService ,ImportService>();
 builder.Services.AddScoped<IExportService ,ExportService>();
 builder.Services.AddScoped<INatJurService ,NatJurService>();
+builder.Services.AddScoped<IURAService ,URAService>();
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 builder.Services.AddMudServices();
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
+    config.SnackbarConfiguration.PreventDuplicates = false;
+    config.SnackbarConfiguration.NewestOnTop = false;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.VisibleStateDuration = 10000;
+    config.SnackbarConfiguration.HideTransitionDuration = 500;
+    config.SnackbarConfiguration.ShowTransitionDuration = 500;
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
+});
 
 var app = builder.Build();
 

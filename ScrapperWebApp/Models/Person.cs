@@ -2,6 +2,7 @@
 {
     public class Person
     {
+        public int NoUraErr { get; set; }
         public string Telefone { get; set; }
         public string Firstname { get; set; }
         public string Lastname { get; set; }
