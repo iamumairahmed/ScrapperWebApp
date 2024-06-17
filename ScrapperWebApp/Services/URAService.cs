@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ScrapperWebApp.Models;
+using ScrapperWebApp.Models.Dtos;
 using ScrapperWebApp.Services.Interfaces;
 namespace ScrapperWebApp.Services
 {
@@ -16,8 +17,36 @@ namespace ScrapperWebApp.Services
             try
             {
                 var ctx = _context.CreateDbContext();
-                var uraErrors = await ctx.UraErrors.ToListAsync();
-                return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, uraErrors);
+
+                var uraErrors = await ctx.UraErrors
+                    .Join(ctx.Empresas, p => p.NoCnpj, pc => pc.NoCnpj, (p, pc) => new { p, pc })
+                    .Join(ctx.Ceps, ppc => ppc.pc.NoCep, c => c.NoCep, (ppc, c) => new { ppc, c })
+                    .Select(m => new {
+                        m.c.CdEstado,
+                        m.ppc.p.NoUraErr,
+                        m.ppc.p.NoFone1,
+                        m.ppc.p.DsSocio,
+                        m.ppc.p.CdRzsocial,
+                        m.ppc.p.CdEmail,
+                        m.ppc.p.NoCnpj,
+                        m.ppc.p.CdErrors
+                    })
+                    .ToListAsync();
+
+
+                var finalresults = uraErrors.Select(m => new UraErrorDto
+                {
+                    CdEstado = m.CdEstado,
+                    NoUraErr = m.NoUraErr,
+                    NoFone1 = m.NoFone1,
+                    DsSocio = m.DsSocio,
+                    CdRzsocial = m.CdRzsocial,
+                    CdEmail = m.CdEmail,
+                    NoCnpj = m.NoCnpj,
+                    CdErrors = m.CdErrors
+                }).ToList();
+
+                return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, finalresults);
             }
             catch (Exception ex)
             {

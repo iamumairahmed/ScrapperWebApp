@@ -34,7 +34,7 @@ namespace ScrapperWebApp.Utility
                 foreach (var property in properties)
                 {
                     Type propertyType = property.PropertyType;
-                    if (property.Name.EndsWith("Navigation")) 
+                    if (property.Name.EndsWith("Navigation") || property.Name.EndsWith("NoUraErr")) 
                     {
                         continue;
                     }
@@ -56,7 +56,7 @@ namespace ScrapperWebApp.Utility
                     DataRow dataRow = dataTable.NewRow();
                     foreach (var property in properties)
                     {
-                        if (property.Name.EndsWith("Navigation"))
+                        if (property.Name.EndsWith("Navigation") || property.Name.EndsWith("NoUraErr"))
                         {
                             continue;
                         }

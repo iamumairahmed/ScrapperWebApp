@@ -51,7 +51,7 @@ namespace ScrapperWebApp.Services
             }
             return Task.FromResult(true);
         }
-        public Task<bool> ExportURAData(List<UraError> uraErrors)
+        public Task<bool> ExportURAData(List<UraErrorDto> uraErrors)
         {
             string base64String;
             try

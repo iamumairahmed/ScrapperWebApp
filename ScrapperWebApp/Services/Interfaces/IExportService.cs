@@ -7,6 +7,6 @@ namespace ScrapperWebApp.Services.Interfaces
     {
         public Task<ResponseModel> SearchExportData(ExportDto exportDto);
         public Task<bool> ExportData(List<EmpresaDto> Empresa);
-        public Task<bool> ExportURAData(List<UraError> UraErrors);
+        public Task<bool> ExportURAData(List<UraErrorDto> UraErrors);
     }
 }

@@ -1,6 +1,7 @@
 ﻿@page "/Robot"
 @using ScrapperWebApp.Data
 @using ScrapperWebApp.Models
+@using ScrapperWebApp.Models.Dtos
 @using ScrapperWebApp.Services
 @using ScrapperWebApp.Services.Interfaces
 @attribute [StreamRendering]
@@ -69,7 +70,7 @@
     string errorMsg = string.Empty;
     bool IsDisabled = true;
     bool hideError = true;
-    List<UraError> searchResults = new List<UraError>();
+    List<UraErrorDto> searchResults = new List<UraErrorDto>();
     int totalRegistros = 0;
     int forAnalysis = 0;
     protected async void StartRobot()
