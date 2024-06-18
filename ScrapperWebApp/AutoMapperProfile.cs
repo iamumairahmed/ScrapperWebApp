@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ScrapperWebApp.Models;
+using ScrapperWebApp.Models.Dtos;
 using System;
 
 namespace ScrapperWebApp
@@ -9,7 +10,7 @@ namespace ScrapperWebApp
         public AutoMapperProfile()
         {
             CreateMap<Empresa, Empresa>();
-            CreateMap<UraError, Person>()
+            CreateMap<UraErrorDto, Person>()
              .ForMember(dest => dest.NoUraErr, opt => opt.MapFrom(src => src.NoUraErr))
              .ForMember(dest => dest.Telefone, opt => opt.MapFrom(src => src.NoFone1))
              .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.CdEmail))
@@ -21,17 +22,17 @@ namespace ScrapperWebApp
         }
     }
 
-    public class LastnameResolver : IValueResolver<UraError, Person, string>
+    public class LastnameResolver : IValueResolver<UraErrorDto, Person, string>
     {
-        public string Resolve(UraError source, Person destination, string destMember, ResolutionContext context)
+        public string Resolve(UraErrorDto source, Person destination, string destMember, ResolutionContext context)
         {
             var nameTokens = source.DsSocio?.Split(' ') ?? new string[0];
             return nameTokens.Length > 1 ? string.Join(" ", nameTokens.Skip(1)) : string.Empty;
         }
     }
-    public class FirstnameResolver : IValueResolver<UraError, Person, string>
+    public class FirstnameResolver : IValueResolver<UraErrorDto, Person, string>
     {
-        public string Resolve(UraError source, Person destination, string destMember, ResolutionContext context)
+        public string Resolve(UraErrorDto source, Person destination, string destMember, ResolutionContext context)
         {
             var nameTokens = source.DsSocio?.Split(' ') ?? new string[0];
             return nameTokens.Length > 0 ? nameTokens[0] : string.Empty;

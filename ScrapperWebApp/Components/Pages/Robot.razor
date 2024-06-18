@@ -75,11 +75,21 @@
     int forAnalysis = 0;
     protected async void StartRobot()
     {
+        Snackbar.Add("Starting Robot!", Severity.Success, config =>
+        {
+            config.ShowCloseIcon = false;
+            config.HideIcon = true;
+        });
         var results = await uraservice.GetURAAsync();
         if (results.Success)
         {
             await scrapperService.CheckRegistered(results.Output);
         }
+        Snackbar.Add("Stopping Robot!", Severity.Warning, config =>
+        {
+            config.ShowCloseIcon = false;
+            config.HideIcon = true;
+        });
     }
     protected override async Task OnInitializedAsync()
     {

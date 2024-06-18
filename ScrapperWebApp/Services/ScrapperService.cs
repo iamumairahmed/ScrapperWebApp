@@ -17,6 +17,7 @@ using System;
 using System.Xml.Linq;
 using DocumentFormat.OpenXml;
 using AutoMapper;
+using ScrapperWebApp.Models.Dtos;
 
 namespace ScrapperWebApp.Services
 {
@@ -560,7 +561,7 @@ namespace ScrapperWebApp.Services
             return null;
         }
 
-        public Task<bool> CheckRegistered(List<UraError> uraErrors)
+        public Task<bool> CheckRegistered(List<UraErrorDto> uraErrors)
         {
             try
             {
@@ -852,7 +853,7 @@ namespace ScrapperWebApp.Services
             //}
             return true;
         }
-        private List<Person> ConvertURAErrorToPersons(List<UraError> uraErrors)
+        private List<Person> ConvertURAErrorToPersons(List<UraErrorDto> uraErrors)
         {
             List<Person> persons = new List<Person>();
             persons = _mapper.Map<List<Person>>(uraErrors);

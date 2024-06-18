@@ -1,4 +1,5 @@
 ﻿using ScrapperWebApp.Models;
+using ScrapperWebApp.Models.Dtos;
 
 namespace ScrapperWebApp.Services.Interfaces
 {
@@ -6,6 +7,6 @@ namespace ScrapperWebApp.Services.Interfaces
     {
         Task<List<Empresa>> GetScrappedData(Filtro filtro);
         Task<List<Filtro>> GetMainRecords(Filtro filtro);
-        Task<bool> CheckRegistered(List<UraError> uraErrors);
+        Task<bool> CheckRegistered(List<UraErrorDto> uraErrors);
     }
 }

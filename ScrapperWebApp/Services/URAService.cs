@@ -18,23 +18,31 @@ namespace ScrapperWebApp.Services
             {
                 var ctx = _context.CreateDbContext();
 
+
                 var uraErrors = await ctx.UraErrors
-                    .Join(ctx.Empresas, p => p.NoCnpj, pc => pc.NoCnpj, (p, pc) => new { p, pc })
-                    .Join(ctx.Ceps, ppc => ppc.pc.NoCep, c => c.NoCep, (ppc, c) => new { ppc, c })
-                    .Select(m => new {
-                        m.c.CdEstado,
-                        m.ppc.p.NoUraErr,
-                        m.ppc.p.NoFone1,
-                        m.ppc.p.DsSocio,
-                        m.ppc.p.CdRzsocial,
-                        m.ppc.p.CdEmail,
-                        m.ppc.p.NoCnpj,
-                        m.ppc.p.CdErrors
-                    })
-                    .ToListAsync();
+                .Join(ctx.Empresas, p => p.NoCnpj, pc => pc.NoCnpj, (p, pc) => new { p, pc })
+                .GroupJoin(
+                    ctx.Ceps,
+                    ppc => ppc.pc.NoCep,
+                    c => c.NoCep,
+                    (ppc, ceps) => new { ppc.p, ppc.pc, Ceps = ceps.FirstOrDefault() }
+                )
+                .Select(m => new {
+                    m.p.NoUraErr,
+                    m.p.NoCnpj,
+                    NoCep = m.Ceps != null ? m.Ceps.NoCep : null,
+                    m.Ceps.CdEstado,
+                    m.p.NoFone1,
+                    m.p.DsSocio,
+                    m.p.CdRzsocial,
+                    m.p.CdEmail,
+                    m.p.CdErrors
+                })
+                .ToListAsync();
+               
+                var uraErrorsFiltered = uraErrors.Where(x => string.IsNullOrEmpty(x.CdErrors)).ToList();
 
-
-                var finalresults = uraErrors.Select(m => new UraErrorDto
+                var finalresults = uraErrorsFiltered.Select(m => new UraErrorDto
                 {
                     CdEstado = m.CdEstado,
                     NoUraErr = m.NoUraErr,
