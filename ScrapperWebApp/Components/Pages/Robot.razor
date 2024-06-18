@@ -173,7 +173,7 @@
     {
         loadingCompleted = false;
         StateHasChanged();
-        var results = await uraservice.GetURAAsync();
+        var results = await uraservice.GetURAForExportAsync();
         if (results.Success)
         {
             searchResults = results.Output;
@@ -185,6 +185,7 @@
                     config.ShowCloseIcon = false;
                     config.HideIcon = true;
                 });
+                showExportAlert = true;
             }
             else
             {
@@ -200,10 +201,8 @@
 
         await GetCounts();
 
-        showExportAlert = true;
         loadingCompleted = true;
         StateHasChanged();
-
     }
     protected async void Search()
     {

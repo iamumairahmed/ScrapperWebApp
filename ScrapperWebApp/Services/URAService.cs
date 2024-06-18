@@ -62,6 +62,53 @@ namespace ScrapperWebApp.Services
                 return ResponseModel.FailureResponse(GlobalDeclaration._internalServerError);
             }
         }
+        public async Task<ResponseModel> GetURAForExportAsync()
+        {
+            try
+            {
+                var ctx = _context.CreateDbContext();
+
+                var uraErrors = await ctx.UraErrors
+                .Join(ctx.Empresas, p => p.NoCnpj, pc => pc.NoCnpj, (p, pc) => new { p, pc })
+                .GroupJoin(
+                    ctx.Ceps,
+                    ppc => ppc.pc.NoCep,
+                    c => c.NoCep,
+                    (ppc, ceps) => new { ppc.p, ppc.pc, Ceps = ceps.FirstOrDefault() }
+                )
+                .Select(m => new {
+                    m.p.NoUraErr,
+                    m.p.NoCnpj,
+                    NoCep = m.Ceps != null ? m.Ceps.NoCep : null,
+                    m.Ceps.CdEstado,
+                    m.p.NoFone1,
+                    m.p.DsSocio,
+                    m.p.CdRzsocial,
+                    m.p.CdEmail,
+                    m.p.CdErrors
+                })
+                .ToListAsync();
+
+                var finalresults = uraErrors.Select(m => new UraErrorDto
+                {
+                    CdEstado = m.CdEstado,
+                    NoUraErr = m.NoUraErr,
+                    NoFone1 = m.NoFone1,
+                    DsSocio = m.DsSocio,
+                    CdRzsocial = m.CdRzsocial,
+                    CdEmail = m.CdEmail,
+                    NoCnpj = m.NoCnpj,
+                    CdErrors = m.CdErrors
+                }).ToList();
+
+                return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, finalresults);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return ResponseModel.FailureResponse(GlobalDeclaration._internalServerError);
+            }
+        }
         public async Task<ResponseModel> GetRegistrosCountAsync()
         {
             try

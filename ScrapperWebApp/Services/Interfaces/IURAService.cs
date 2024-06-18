@@ -6,6 +6,7 @@ namespace ScrapperWebApp.Services.Interfaces
     public interface IURAService
     {
         Task<ResponseModel> GetURAAsync();
+        Task<ResponseModel> GetURAForExportAsync();
         Task<ResponseModel> GetRegistrosCountAsync();
         Task<ResponseModel> GetForAnalysisCountAsync();
         Task<ResponseModel> CreateURAAsync(List<UraError> objUras);
