@@ -40,13 +40,13 @@ namespace ScrapperWebApp.Services
         public async Task<List<Empresa>> GetScrappedData(Filtro filtro)
         {
 
-            //ScrapeDetailsHtml("https://casadosdados.com.br/solucao/cnpj/fergus-holding-capital-ltda-53414766000189", new Empresa());
+            //ScrapeDetailsHtml("https://casadosdados.com.br/solucao/cnpj/brb-banco-de-brasilia-sa-00000208020306", new Empresa(), filtro);
             var data = new List<Empresa>();
 
             var requestObject = new RequestObject();
 
             //filtro.DtInicial = DateTime.Parse("01/01/2024");
-            //filtro.DtFinal = DateTime.Parse("12/31/2024");
+            //filtro.DtFinal = DateTime.Parse("03/01/2024");
 
             requestObject.query.situacao_cadastral = "ATIVA";
             requestObject.query.cep = [filtro.NoCep.ToString()];

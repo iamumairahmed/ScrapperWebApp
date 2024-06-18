@@ -34,7 +34,7 @@ namespace ScrapperWebApp.Utility
                 foreach (var property in properties)
                 {
                     Type propertyType = property.PropertyType;
-                    if (property.Name.EndsWith("Navigation") || property.Name.EndsWith("NoUraErr")) 
+                    if (property.Name.EndsWith("Navigation"))
                     {
                         continue;
                     }
@@ -56,7 +56,7 @@ namespace ScrapperWebApp.Utility
                     DataRow dataRow = dataTable.NewRow();
                     foreach (var property in properties)
                     {
-                        if (property.Name.EndsWith("Navigation") || property.Name.EndsWith("NoUraErr"))
+                        if (property.Name.EndsWith("Navigation"))
                         {
                             continue;
                         }
@@ -77,7 +77,14 @@ namespace ScrapperWebApp.Utility
                         }
                         else
                         {
-                            dataRow[property.Name] = value ?? DBNull.Value;
+                            if (property.Name == "NoCnpj")
+                            {
+                                dataRow[property.Name] = value.ToString().PadLeft(14, '0');
+                            }
+                            else
+                            {
+                                dataRow[property.Name] = value ?? DBNull.Value;
+                            }
                         }
                     }
                     dataTable.Rows.Add(dataRow);
@@ -192,7 +199,14 @@ namespace ScrapperWebApp.Utility
                                     }
                                     else
                                     {
-                                        row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+                                        if (prop.Name == "NoCnpj")
+                                        {
+                                            row[prop.Name] = prop.GetValue(item).ToString().PadLeft(14, '0');
+                                        }
+                                        else
+                                        {
+                                            row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+                                        }
                                     }
                                 }
                             }

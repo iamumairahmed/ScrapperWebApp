@@ -59,7 +59,7 @@
         <MudAlert Severity="Severity.Warning" hidden="@hideError">@errorMsg</MudAlert>
         @if (showExportAlert)
         {
-            <MudAlert Severity="Severity.Success" ContentAlignment="HorizontalAlignment.Center" ShowCloseIcon="true" CloseIconClicked="(() => CloseExportAlert(false))">File Exported Successfully!</MudAlert>
+            <MudAlert Severity="Severity.Success" ContentAlignment="HorizontalAlignment.Center" ShowCloseIcon="true" CloseIconClicked="(() => CloseExportAlert(false))">@errorMsg</MudAlert>
         }
     </div>
 </MudContainer> 
@@ -150,11 +150,14 @@
         bool uraSeederCompleted = await importService.SeedURAWithErrorsData();
         if (uraSeederCompleted)
         {
+            showExportAlert = true;
+            errorMsg = "File Imported Successfully!";
             Snackbar.Add("URA Data Imported Successfully...", Severity.Success, config =>
             {
                 config.ShowCloseIcon = false;
                 config.HideIcon = true;
             });
+            StateHasChanged();
         }
         else
         {
@@ -185,6 +188,7 @@
                     config.ShowCloseIcon = false;
                     config.HideIcon = true;
                 });
+                errorMsg = "File Exported Successfully!";
                 showExportAlert = true;
             }
             else
