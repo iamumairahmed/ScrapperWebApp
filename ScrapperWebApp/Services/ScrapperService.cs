@@ -788,8 +788,9 @@ namespace ScrapperWebApp.Services
                             count++;
                             //if (count % 50 == 0)
                             //{
+                            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd-hh:mm:ss") + "| Saving Record in Database.");
                             SaveURAErrors(r);
-                            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd-hh:mm:ss") + ": | Record Processed " + r.Firstname + " " + r.Lastname + ".");
+                            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd-hh:mm:ss") + "| Record Processed " + r.Firstname + " " + r.Lastname + ".");
                             //personsToSave.Clear();
                             //}
                         }
