@@ -176,7 +176,7 @@
     {
         loadingCompleted = false;
         StateHasChanged();
-        var results = await uraservice.GetURAForExportAsync();
+        var results = await uraservice.GetURAAsync();
         if (results.Success)
         {
             searchResults = results.Output;

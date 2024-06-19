@@ -618,12 +618,10 @@ namespace ScrapperWebApp.Services
 
                     Thread.Sleep(5000);
                     driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
-                    //IWebElement verificationMsgElem = driver.FindElements(By.XPath("verifique seu dispositivo móvel"));
                     bool verificationDone = false;
                     while (verificationDone != true)
                     {
                         driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
-                        //var elems = driver.FindElements(By.XPath("verifique seu dispositivo móvel"));
                         var elements = driver.FindElements(By.XPath("//h2[contains(text(), 'Verifique seu dispositivo móvel')]"));
                         var elementss = driver.FindElements(By.XPath("//h2[contains(text(), 'Solicitação cancelada')]"));
                         var problemElements = driver.FindElements(By.XPath("//h2[contains(text(), 'Problema ao aprovar sua solicitação')]"));
@@ -655,20 +653,12 @@ namespace ScrapperWebApp.Services
                                 return Task.FromResult(false);
                             }
                         }
-                        // "Verifique seu dispositivo móvel"
-                        // Solicitação cancelada
                         if (elements == null || elements.Count == 0)
                         {
                             verificationDone = true;
                         }
                         // Keep looping until Enter key is pressed
                     }
-
-                    //Console.WriteLine("Press Enter to Continue to Leads Page...");
-                    //while (Console.ReadKey(true).Key != ConsoleKey.Enter)
-                    //{
-                    // Keep looping until Enter key is pressed
-                    //}
 
                     Thread.Sleep(2500);
                     IWebElement leadLink = driver.FindElement(By.XPath("//a[text()='Leads']"));
@@ -693,6 +683,8 @@ namespace ScrapperWebApp.Services
                     {
                         try
                         {
+                            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd-hh:mm:ss") + "| Starting Record " + r.Firstname + " " + r.Lastname + ".");
+
                             IWebElement firstnameElem = driver.FindElement(By.CssSelector(".firstName.compoundBorderBottom.form-element__row.input"));
                             if (firstnameElem != null)
                             {
@@ -792,12 +784,12 @@ namespace ScrapperWebApp.Services
                                 r.Errors.Add(errorList.FirstOrDefault().Text);
                             }
 
-                            Console.WriteLine(DateTime.Now.ToShortTimeString() + ": Processed " + r.Firstname + " " + r.Lastname + ".");
                             //personsToSave.Add(r);
                             count++;
                             //if (count % 50 == 0)
                             //{
                             SaveURAErrors(r);
+                            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd-hh:mm:ss") + ": | Record Processed " + r.Firstname + " " + r.Lastname + ".");
                             //personsToSave.Clear();
                             //}
                         }
