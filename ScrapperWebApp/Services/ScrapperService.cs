@@ -583,7 +583,7 @@ namespace ScrapperWebApp.Services
                     driver.Navigate().GoToUrl(url);
 
                     //WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
-                    driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+                    //driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
 
                     var employeeLabel = driver.FindElement(By.CssSelector("#sfdc_username_container"), 10);
 
@@ -617,11 +617,11 @@ namespace ScrapperWebApp.Services
                     }
 
                     Thread.Sleep(5000);
-                    driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+                    //driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
                     bool verificationDone = false;
                     while (verificationDone != true)
                     {
-                        driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+                        //driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
                         var elements = driver.FindElements(By.XPath("//h2[contains(text(), 'Verifique seu dispositivo móvel')]"));
                         var elementss = driver.FindElements(By.XPath("//h2[contains(text(), 'Solicitação cancelada')]"));
                         var problemElements = driver.FindElements(By.XPath("//h2[contains(text(), 'Problema ao aprovar sua solicitação')]"));
