@@ -27,7 +27,8 @@ namespace ScrapperWebApp.Services
                     c => c.NoCep,
                     (ppc, ceps) => new { ppc.p, ppc.pc, Ceps = ceps.FirstOrDefault() }
                 )
-                .Select(m => new {
+                .Select(m => new
+                {
                     m.p.NoUraErr,
                     m.p.NoCnpj,
                     NoCep = m.Ceps != null ? m.Ceps.NoCep : null,
@@ -39,7 +40,7 @@ namespace ScrapperWebApp.Services
                     m.p.CdErrors
                 })
                 .ToListAsync();
-               
+
                 var uraErrorsFiltered = uraErrors.Where(x => string.IsNullOrEmpty(x.CdErrors)).ToList();
 
                 var finalresults = uraErrorsFiltered.Select(m => new UraErrorDto
@@ -55,6 +56,7 @@ namespace ScrapperWebApp.Services
                 }).ToList();
 
                 return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, finalresults);
+                //return ResponseModel.SuccessResponse(GlobalDeclaration._successResponse, true);
             }
             catch (Exception ex)
             {
