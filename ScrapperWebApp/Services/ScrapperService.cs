@@ -584,8 +584,8 @@ namespace ScrapperWebApp.Services
 
                     //WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
                     //driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
-
-                    var employeeLabel = driver.FindElement(By.CssSelector("#sfdc_username_container"), 10);
+                    Thread.Sleep(2000);
+                    var employeeLabel = driver.FindElement(By.CssSelector("#sfdc_username_container"), 60);
 
                     if (employeeLabel != null)
                     {
@@ -596,7 +596,7 @@ namespace ScrapperWebApp.Services
 
                         if (inputElement != null)
                         {
-                            inputElement.SendKeys("barbara.roncetti@okbank.com.br");
+                            inputElement.SendKeys("fernando.coutinho.001@c6partner.com");
                         }
 
                         IWebElement passElement = driver.FindElement(By.Id("sfdc_password_container"));
@@ -604,7 +604,7 @@ namespace ScrapperWebApp.Services
 
                         if (inputPassElement != null)
                         {
-                            inputPassElement.SendKeys("GeOkbank@2024!!!");
+                            inputPassElement.SendKeys("Okbank@2024!!!");
                         }
 
                         IWebElement buttonElement = driver.FindElement(By.CssSelector(".slds-button.slds-button--brand.loginButton.uiButton--none.uiButton"));
@@ -660,7 +660,7 @@ namespace ScrapperWebApp.Services
                         // Keep looping until Enter key is pressed
                     }
 
-                    Thread.Sleep(2500);
+                    Thread.Sleep(5000);
                     IWebElement leadLink = driver.FindElement(By.XPath("//a[text()='Leads']"));
                     if (leadLink != null)
                     {
@@ -769,9 +769,10 @@ namespace ScrapperWebApp.Services
                                 divConfirmarElement.Click();
                             }
 
-                            Thread.Sleep(500);
+                            Thread.Sleep(2000);
 
                             // Check Errors
+                            //var phoneError = driver.FindElements(By.CssSelector(".has-error.uiInputDefaultError.uiInput.uiInputPhone.uiInput--default.uiInput--input"));
                             var phoneError = driver.FindElements(By.CssSelector(".has-error.uiInputDefaultError.uiInput.uiInputPhone.uiInput--default.uiInput--input"));
                             if (phoneError != null && phoneError.Count() > 0)
                             {
@@ -834,6 +835,8 @@ namespace ScrapperWebApp.Services
                 uraError.CdErrors = string.Join(", ", p.Errors);
                 uraError.NoFone1 = p.Telefone;
                 uraError.CdRzsocial = p.Razao;
+                uraError.CdEmail = p.Email;
+                uraError.NoCnpj = Int64.Parse(p.Cnpj);
                 uraError.DsSocio = p.Firstname + " " + p.Lastname;
 
                 _uraService.UpdateURAAsync(uraError);
